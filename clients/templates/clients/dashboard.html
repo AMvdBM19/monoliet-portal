@@ -1,0 +1,161 @@
+{% extends "clients/base.html" %}
+
+{% block title %}Dashboard - Monoliet Client Portal{% endblock %}
+
+{% block content %}
+<!-- Welcome Section -->
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Welcome, {{ client.contact_name }}</h1>
+    <p class="mt-1 text-sm text-gray-600">{{ client.company_name }} - {{ client.plan_tier }}</p>
+</div>
+
+<!-- Stats Overview -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Active Workflows -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+                <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Active Workflows</dt>
+                    <dd class="text-2xl font-semibold text-gray-900">{{ active_workflows }} / {{ total_workflows }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executions (Last 30 Days) -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+                <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Success Rate</dt>
+                    <dd class="text-2xl font-semibold text-gray-900">{{ success_rate }}%</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Executions -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
+                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+                <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Total Executions</dt>
+                    <dd class="text-2xl font-semibold text-gray-900">{{ total_executions }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Two Column Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Recent Executions -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Recent Executions</h2>
+        </div>
+        <div class="p-6">
+            {% if recent_executions %}
+            <div class="space-y-4">
+                {% for execution in recent_executions %}
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">{{ execution.workflow.workflow_name }}</p>
+                        <p class="text-xs text-gray-500">{{ execution.execution_date }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-900">{{ execution.total_count }} runs</p>
+                        <p class="text-xs {% if execution.error_count > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                            {{ execution.success_count }} success / {{ execution.error_count }} errors
+                        </p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-sm">No recent executions</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pending Invoices -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Pending Invoices</h2>
+        </div>
+        <div class="p-6">
+            {% if pending_invoices %}
+            <div class="space-y-4">
+                {% for invoice in pending_invoices %}
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">{{ invoice.invoice_number }}</p>
+                        <p class="text-xs text-gray-500">Due: {{ invoice.due_date }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-semibold text-gray-900">${{ invoice.amount }}</p>
+                        <span class="status-{{ invoice.status }}">{{ invoice.get_status_display }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4">
+                <a href="{% url 'portal:invoices' %}" class="text-sm text-blue-600 hover:text-blue-800">View all invoices →</a>
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-sm">No pending invoices</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Open Support Tickets -->
+<div class="mt-6 bg-white rounded-lg shadow">
+    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Open Support Tickets</h2>
+        <a href="{% url 'portal:create-ticket' %}" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+            New Ticket
+        </a>
+    </div>
+    <div class="p-6">
+        {% if open_tickets %}
+        <div class="space-y-4">
+            {% for ticket in open_tickets %}
+            <div class="border-l-4 {% if ticket.priority == 'high' %}border-red-500{% elif ticket.priority == 'medium' %}border-yellow-500{% else %}border-gray-500{% endif %} pl-4 py-2">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">{{ ticket.subject }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Created: {{ ticket.created_at|date:"M d, Y" }}</p>
+                    </div>
+                    <div class="ml-4">
+                        <span class="status-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mt-4">
+            <a href="{% url 'portal:support' %}" class="text-sm text-blue-600 hover:text-blue-800">View all tickets →</a>
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-sm">No open support tickets</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

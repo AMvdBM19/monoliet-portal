@@ -4,40 +4,50 @@ __pycache__/
 *$py.class
 *.so
 .Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 env/
 venv/
 ENV/
-*.egg-info/
-dist/
-build/
 
 # Django
 *.log
+local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media/
-staticfiles/
+/staticfiles/
+/media/
 
 # Environment variables
 .env
 .env.local
-*.env
 
-# Database
-postgres/data/
-*.sql
-
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# Docker volumes
-directus/
-uploads/
-
 # OS
 .DS_Store
 Thumbs.db
+
+# PostgreSQL data
+/postgres/
+
+# Docker
+*.pid

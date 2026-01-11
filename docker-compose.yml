@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: monoliet-postgres
+    restart: unless-stopped
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    networks:
+      - web
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  django:
+    build: .
+    container_name: monoliet-django
+    restart: unless-stopped
+    command: gunicorn portal.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    expose:
+      - "8000"
+    volumes:
+      - .:/app
+      - ./staticfiles:/app/staticfiles
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - web
+
+networks:
+  web:
+    external: true
