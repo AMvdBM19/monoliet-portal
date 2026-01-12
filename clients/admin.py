@@ -221,11 +221,17 @@ class ExecutionAdmin(admin.ModelAdmin):
         if obj.total_count == 0:
             return 'N/A'
         rate = (obj.success_count / obj.total_count) * 100
-        color = 'green' if rate >= 90 else 'orange' if rate >= 70 else 'red'
+        rate_str = str(round(rate, 1))
+        if rate >= 90:
+            color = 'green'
+        elif rate >= 70:
+            color = 'orange'
+        else:
+            color = 'red'
         return format_html(
-            '<span style="color: {}; font-weight: bold;">{:.1f}%</span>',
+            '<span style="color: {}; font-weight: bold;">{}%</span>',
             color,
-            rate
+            rate_str # Pass pre-formatted string
         )
     success_rate.short_description = 'Success Rate'
 
