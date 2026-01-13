@@ -219,19 +219,18 @@ class ExecutionAdmin(admin.ModelAdmin):
     def success_rate(self, obj):
         """Calculate and display success rate."""
         if obj.total_count == 0:
-            return 'N/A'
+            return format_html('<span style="color: gray;">N/A</span>')
         rate = (obj.success_count / obj.total_count) * 100
-        rate_str = str(round(rate, 1))
         if rate >= 90:
             color = 'green'
-        elif rate >= 70:
+        elif rate >= 75:
             color = 'orange'
         else:
             color = 'red'
+        percentage = f'{rate:.1f}%'
         return format_html(
-            '<span style="color: {}; font-weight: bold;">{}%</span>',
-            color,
-            rate_str # Pass pre-formatted string
+            '<span style="color: {};">{}</span>',
+            color, percentage
         )
     success_rate.short_description = 'Success Rate'
 

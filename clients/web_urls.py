@@ -13,7 +13,10 @@ app_name = 'portal'
 urlpatterns = [
     # Authentication
     path('login/', auth_views.LoginView.as_view(template_name='clients/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='portal:login'), name='logout'),
+    path('logout/', auth_views.LogoutView.as_view(
+        template_name='clients/logout_confirm.html',
+        next_page='portal:login'
+    ), name='logout'),
 
     # Client portal pages
     path('', web_views.dashboard_view, name='dashboard'),
