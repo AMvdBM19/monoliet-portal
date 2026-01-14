@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,86 +6,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Monoliet Client Portal{% endblock %}</title>
 
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-primary': '#0B0D10',
+                        'text-light': '#DBDBDB',
+                        'text-dark': '#1E1F2B',
+                        'accent': '#9B9B9B',
+                    },
+                    fontFamily: {
+                        'primary': ['Space Grotesk', 'sans-serif'],
+                        'secondary': ['Space Mono', 'monospace'],
+                        'text': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
     <!-- Custom CSS -->
-    <style>
-        .status-active { background-color: #10b981; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.875rem; }
-        .status-paused { background-color: #f59e0b; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.875rem; }
-        .status-error { background-color: #ef4444; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.875rem; }
-        .status-pending { background-color: #f59e0b; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.875rem; }
-        .status-paid { background-color: #10b981; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.875rem; }
-        .status-overdue { background-color: #ef4444; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.875rem; }
-        .status-open { background-color: #ef4444; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.875rem; }
-        .status-in-progress { background-color: #3b82f6; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.875rem; }
-        .status-resolved { background-color: #10b981; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.875rem; }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
-<body class="bg-gray-50">
+<body class="font-text" style="background: #0B0D10; color: #DBDBDB;">
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm border-b border-gray-200">
+    <nav style="backdrop-filter: blur(10px); background-color: rgba(0, 0, 0, 0.5); border-bottom: 1px solid rgba(155, 155, 155, 0.2);" class="fixed top-0 w-full z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
-                        <h1 class="text-2xl font-bold text-blue-600">Monoliet</h1>
-                    </div>
-                    {% if user.is_authenticated %}
-                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                        <a href="{% url 'portal:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            Dashboard
-                        </a>
-                        <a href="{% url 'portal:workflows' %}" class="{% if request.resolver_match.url_name == 'workflows' %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            Workflows
-                        </a>
-                        <a href="{% url 'portal:invoices' %}" class="{% if request.resolver_match.url_name == 'invoices' %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            Invoices
-                        </a>
-                        <a href="{% url 'portal:support' %}" class="{% if request.resolver_match.url_name == 'support' %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            Support
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
+            <div class="flex justify-between h-16 items-center">
+                <!-- Logo -->
                 <div class="flex items-center">
-                    {% if user.is_authenticated %}
-                        <span class="text-gray-700 text-sm mr-4">{{ user.username }}</span>
-                        <form method="post" action="{% url 'portal:logout' %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium cursor-pointer">
-                                Logout
-                            </button>
-                        </form>
-                    {% endif %}
+                    <span class="font-primary text-white text-xl font-semibold tracking-wider">MONOLIET</span>
                 </div>
+
+                <!-- Navigation Links (if authenticated) -->
+                {% if user.is_authenticated %}
+                <div class="hidden md:flex space-x-8">
+                    <a href="{% url 'portal:dashboard' %}" class="font-primary text-accent hover:text-white transition-colors duration-300 text-sm uppercase tracking-wider">Dashboard</a>
+                    <a href="{% url 'portal:workflows' %}" class="font-primary text-accent hover:text-white transition-colors duration-300 text-sm uppercase tracking-wider">Workflows</a>
+                    <a href="{% url 'portal:invoices' %}" class="font-primary text-accent hover:text-white transition-colors duration-300 text-sm uppercase tracking-wider">Invoices</a>
+                    <a href="{% url 'portal:support' %}" class="font-primary text-accent hover:text-white transition-colors duration-300 text-sm uppercase tracking-wider">Support</a>
+                </div>
+
+                <!-- User Menu -->
+                <div class="flex items-center space-x-4">
+                    <span class="font-secondary text-accent text-xs uppercase">{{ user.username }}</span>
+                    <form method="post" action="{% url 'portal:logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-primary">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
             </div>
         </div>
     </nav>
 
     <!-- Messages -->
     {% if messages %}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+    <div class="fixed top-20 right-4 z-40 max-w-md">
         {% for message in messages %}
-        <div class="rounded-md p-4 mb-4 {% if message.tags == 'success' %}bg-green-50 text-green-800{% elif message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-blue-50 text-blue-800{% endif %}">
-            {{ message }}
+        <div class="glass-container mb-4 fade-in {% if message.tags == 'success' %}border-green-500{% elif message.tags == 'error' %}border-red-500{% else %}border-blue-500{% endif %}" style="border-width: 1px;">
+            <p class="font-secondary text-sm">{{ message }}</p>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Content wrapper with padding for fixed nav -->
+    <div class="pt-16">
         {% block content %}{% endblock %}
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 mt-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <p class="text-center text-gray-500 text-sm">
-                &copy; 2024 Monoliet.cloud - Workflow Automation Services
-            </p>
-        </div>
-    </footer>
+    </div>
 </body>
 </html>

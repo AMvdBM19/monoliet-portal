@@ -1,6 +1,276 @@
-/* Custom CSS for Monoliet Client Portal */
+/* Monoliet Portal - Palantir-Inspired Design System */
 
-/* Additional custom styles can be added here */
-/* Currently using Tailwind CSS via CDN for all styling */
+:root {
+    --bg-primary: #0B0D10;
+    --primary: #FFFFFF;
+    --text-light: #DBDBDB;
+    --text-dark: #1E1F2B;
+    --accent: #9B9B9B;
+    --container-bg: rgba(0, 0, 0, 0.5);
+}
 
-/* Custom status badge styles are defined inline in base.html */
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-light);
+    min-height: 100vh;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.font-primary {
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.font-secondary {
+    font-family: 'Space Mono', monospace;
+}
+
+.font-text {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Glassmorphic Container */
+.glass-container {
+    backdrop-filter: blur(10px);
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    border: 1px solid rgba(155, 155, 155, 0.2);
+    padding: 2rem;
+}
+
+/* Buttons */
+.btn-primary {
+    background: #FFFFFF;
+    color: #1e1f2b;
+    border: 1px solid #1e1f2b;
+    border-radius: 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500;
+    font-size: 0.875rem;
+    padding: 12px 24px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background: #1e1f2b;
+    color: #FFFFFF;
+    border: 1px solid #FFFFFF;
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500;
+    font-size: 0.875rem;
+    padding: 12px 24px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-secondary:hover {
+    background: var(--accent);
+    color: var(--bg-primary);
+}
+
+/* Status Badges */
+.status-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+}
+
+.status-active {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22C55E;
+    border: 1px solid #22C55E;
+}
+
+.status-paused {
+    background: rgba(251, 191, 36, 0.2);
+    color: #FBBF24;
+    border: 1px solid #FBBF24;
+}
+
+.status-error {
+    background: rgba(239, 68, 68, 0.2);
+    color: #EF4444;
+    border: 1px solid #EF4444;
+}
+
+.status-pending {
+    background: rgba(155, 155, 155, 0.2);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+}
+
+/* Tables */
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.875rem;
+}
+
+.data-table thead {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.data-table th {
+    padding: 16px;
+    text-align: left;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    border-bottom: 1px solid rgba(155, 155, 155, 0.2);
+    font-size: 0.75rem;
+}
+
+.data-table td {
+    padding: 16px;
+    border-bottom: 1px solid rgba(155, 155, 155, 0.1);
+    color: var(--text-light);
+}
+
+.data-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.data-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Cards */
+.stat-card {
+    backdrop-filter: blur(10px);
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    border: 1px solid rgba(155, 155, 155, 0.2);
+    padding: 1.5rem;
+    transition: border-color 0.3s ease;
+}
+
+.stat-card:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* Forms */
+.form-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(155, 155, 155, 0.3);
+    border-radius: 0;
+    padding: 12px 16px;
+    color: var(--text-light);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.form-input::placeholder {
+    color: var(--accent);
+}
+
+.form-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* Links */
+a {
+    color: var(--primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--accent);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}

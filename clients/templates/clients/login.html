@@ -3,50 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Monoliet Client Portal</title>
+    <title>Login - Monoliet Portal</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body {
+            background: #0B0D10;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-container {
+            backdrop-filter: blur(10px);
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
+            border: 1px solid rgba(155, 155, 155, 0.2);
+        }
+        .form-input {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(155, 155, 155, 0.3);
+            border-radius: 0;
+            color: #DBDBDB;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #FFFFFF;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .btn-login {
+            background: #FFFFFF;
+            color: #1e1f2b;
+            border: 1px solid #1e1f2b;
+            border-radius: 0;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+        }
+        .btn-login:hover {
+            background: #1e1f2b;
+            color: #FFFFFF;
+            border-color: #FFFFFF;
+        }
+    </style>
 </head>
-<body class="bg-gray-50">
-    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full space-y-8">
-            <div>
-                <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                    Monoliet Client Portal
-                </h2>
-                <p class="mt-2 text-center text-sm text-gray-600">
-                    Sign in to access your workflows and invoices
-                </p>
-            </div>
-            <form class="mt-8 space-y-6" method="post">
+<body class="min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-md">
+        <!-- Logo -->
+        <div class="text-center mb-12">
+            <h1 style="font-family: 'Space Grotesk', sans-serif;" class="text-4xl font-bold text-white mb-2">MONOLIET</h1>
+            <p style="font-family: 'Space Mono', monospace;" class="text-sm uppercase tracking-wider" style="color: #9B9B9B;">Client Portal Access</p>
+        </div>
+
+        <!-- Login Form -->
+        <div class="glass-container p-8">
+            <form method="post" class="space-y-6">
                 {% csrf_token %}
-                <div class="rounded-md shadow-sm -space-y-px">
-                    <div>
-                        <label for="username" class="sr-only">Username</label>
-                        <input id="username" name="username" type="text" required
-                               class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                               placeholder="Username">
-                    </div>
-                    <div>
-                        <label for="password" class="sr-only">Password</label>
-                        <input id="password" name="password" type="password" required
-                               class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                               placeholder="Password">
-                    </div>
-                </div>
 
                 {% if form.errors %}
-                <div class="rounded-md bg-red-50 p-4">
-                    <p class="text-sm text-red-800">Invalid username or password. Please try again.</p>
+                <div class="bg-red-500 bg-opacity-20 border border-red-500 p-4 text-red-500 text-sm font-mono">
+                    AUTHENTICATION FAILED
                 </div>
                 {% endif %}
 
+                <!-- Username -->
                 <div>
-                    <button type="submit"
-                            class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        Sign in
-                    </button>
+                    <label style="font-family: 'Space Mono', monospace; color: #9B9B9B;" class="block text-xs uppercase tracking-wider mb-2">Username</label>
+                    <input type="text" name="username" required class="form-input w-full px-4 py-3 text-sm">
                 </div>
+
+                <!-- Password -->
+                <div>
+                    <label style="font-family: 'Space Mono', monospace; color: #9B9B9B;" class="block text-xs uppercase tracking-wider mb-2">Password</label>
+                    <input type="password" name="password" required class="form-input w-full px-4 py-3 text-sm">
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" class="btn-login w-full py-3 font-medium">
+                    AUTHENTICATE
+                </button>
             </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8">
+            <p style="font-family: 'Space Mono', monospace; color: #9B9B9B;" class="text-xs">SECURE PORTAL ACCESS</p>
         </div>
     </div>
 </body>
