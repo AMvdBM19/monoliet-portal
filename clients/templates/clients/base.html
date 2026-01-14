@@ -41,9 +41,12 @@
                         <a href="{% url 'portal:invoices' %}" class="{% if request.resolver_match.url_name == 'invoices' %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Invoices
                         </a>
-                        <a href="{% url 'portal:support' %}" class="{% if request.resolver_match.url_name == 'support' %}border-blue-500 text-gray-900{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            Support
-                        </a>
+                        <form method="post" action="{% url 'portal:logout' %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium cursor-pointer">
+                                Logout
+                            </button>
+                        </form>
                     </div>
                     {% endif %}
                 </div>
