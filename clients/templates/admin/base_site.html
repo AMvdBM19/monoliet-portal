@@ -1,0 +1,62 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}MONOLIET // COMMAND CENTER{% endblock %}
+
+{% block branding %}
+<h1 id="site-name" style="font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.1em;">
+    <a href="{% url 'admin:index' %}" style="color: #FFFFFF;">MONOLIET COMMAND CENTER</a>
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+    /* Base */
+    body { background: #0B0D10 !important; color: #DBDBDB !important; font-family: 'Inter', sans-serif !important; }
+
+    /* Header */
+    #header { background: rgba(0,0,0,0.5) !important; backdrop-filter: blur(10px); border-bottom: 1px solid rgba(155,155,155,0.2) !important; }
+    #branding h1, #user-tools { color: #DBDBDB !important; }
+    #user-tools a { color: #DBDBDB !important; font-family: 'Space Mono', monospace !important; font-size: 0.75rem; }
+
+    /* Content */
+    #content { background: transparent !important; }
+    .module { background: rgba(0,0,0,0.5) !important; backdrop-filter: blur(10px) !important; border: 1px solid rgba(155,155,155,0.2) !important; border-radius: 4px !important; }
+    .module h2, .module caption { background: rgba(0,0,0,0.3) !important; color: #9B9B9B !important; font-family: 'Space Mono', monospace !important; font-size: 0.75rem !important; text-transform: uppercase !important; letter-spacing: 0.1em !important; }
+
+    /* Tables */
+    table { background: transparent !important; color: #DBDBDB !important; font-family: 'Space Mono', monospace !important; }
+    thead th { background: rgba(255,255,255,0.05) !important; color: #9B9B9B !important; text-transform: uppercase !important; border-bottom: 1px solid rgba(155,155,155,0.2) !important; }
+    tbody tr { border-bottom: 1px solid rgba(155,155,155,0.1) !important; }
+    tbody tr:hover { background: rgba(255,255,255,0.03) !important; }
+
+    /* Forms */
+    input, textarea, select { background: rgba(0,0,0,0.3) !important; border: 1px solid rgba(155,155,155,0.3) !important; border-radius: 0 !important; color: #DBDBDB !important; }
+    input:focus, textarea:focus, select:focus { border-color: #FFFFFF !important; background: rgba(0,0,0,0.5) !important; outline: none !important; }
+
+    /* Buttons */
+    .button, input[type="submit"], .submit-row input {
+        background: #FFFFFF !important; color: #1e1f2b !important; border: 1px solid #1e1f2b !important;
+        border-radius: 0 !important; font-family: 'Space Grotesk', sans-serif !important;
+        text-transform: uppercase !important; padding: 12px 24px !important; transition: all 0.3s !important;
+    }
+    .button:hover, input[type="submit"]:hover { background: #1e1f2b !important; color: #FFFFFF !important; border-color: #FFFFFF !important; }
+
+    /* Sidebar */
+    #content-related h3, #content-related h4 { background: rgba(0,0,0,0.3) !important; color: #9B9B9B !important; font-family: 'Space Mono', monospace !important; text-transform: uppercase !important; }
+
+    /* Breadcrumbs */
+    .breadcrumbs { background: rgba(0,0,0,0.3) !important; color: #9B9B9B !important; font-family: 'Space Mono', monospace !important; border: 1px solid rgba(155,155,155,0.2) !important; }
+    .breadcrumbs a { color: #DBDBDB !important; }
+
+    /* Messages */
+    .success { background: rgba(34,197,94,0.2) !important; border: 1px solid #22C55E !important; color: #22C55E !important; }
+    .error { background: rgba(239,68,68,0.2) !important; border: 1px solid #EF4444 !important; color: #EF4444 !important; }
+
+    /* Links */
+    a { color: #FFFFFF !important; }
+    a:hover { color: #9B9B9B !important; }
+</style>
+{% endblock %}

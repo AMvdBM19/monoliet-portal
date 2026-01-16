@@ -1,0 +1,162 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<style>
+    .stat-card {
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(155,155,155,0.2);
+        border-radius: 4px;
+        padding: 1.5rem;
+    }
+    .stat-label { font-family: 'Space Mono', monospace; font-size: 0.75rem; color: #9B9B9B; text-transform: uppercase; }
+    .stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 2.5rem; font-weight: 700; color: #FFFFFF; }
+    .stat-change { font-family: 'Space Mono', monospace; font-size: 0.75rem; margin-top: 0.5rem; }
+    .positive { color: #22C55E; }
+    .negative { color: #EF4444; }
+    .chart-container { background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border: 1px solid rgba(155,155,155,0.2); border-radius: 4px; padding: 1.5rem; height: 350px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 2rem;">
+    <!-- Header -->
+    <h1 style="font-family: 'Space Grotesk', sans-serif; font-size: 2rem; color: #FFFFFF; text-transform: uppercase; margin-bottom: 2rem;">OPERATIONAL OVERVIEW</h1>
+
+    <!-- Stats Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="stat-card">
+            <div class="stat-label">Total Clients</div>
+            <div class="stat-value">{{ total_clients|default:"0" }}</div>
+            <div class="stat-change positive">↑ {{ new_clients_this_month|default:"0" }} THIS MONTH</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Active Workflows</div>
+            <div class="stat-value">{{ active_workflows|default:"0" }}</div>
+            <div class="stat-change">{{ total_workflows|default:"0" }} TOTAL</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Monthly Revenue</div>
+            <div class="stat-value">${{ monthly_revenue|default:"0" }}</div>
+            <div class="stat-change positive">↑ ${{ revenue_growth|default:"0" }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Executions Today</div>
+            <div class="stat-value">{{ executions_today|default:"0" }}</div>
+            <div class="stat-change">{{ success_rate|default:"0" }}% SUCCESS</div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="chart-container">
+            <canvas id="clientGrowthChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="chart-container">
+            <canvas id="workflowStatusChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="executionsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Standard Admin Apps -->
+    <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; color: #FFFFFF; text-transform: uppercase; margin: 2rem 0 1rem;">SYSTEM MODULES</h2>
+    {{ block.super }}
+</div>
+
+<script>
+    const chartConfig = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { labels: { color: '#DBDBDB', font: { family: 'Space Mono' } } }
+        },
+        scales: {
+            y: { ticks: { color: '#9B9B9B' }, grid: { color: 'rgba(155,155,155,0.1)' } },
+            x: { ticks: { color: '#9B9B9B' }, grid: { color: 'rgba(155,155,155,0.1)' } }
+        }
+    };
+
+    // Client Growth Chart
+    new Chart(document.getElementById('clientGrowthChart'), {
+        type: 'line',
+        data: {
+            labels: {{ client_growth_labels|safe }},
+            datasets: [{
+                label: 'NEW CLIENTS',
+                data: {{ client_growth_data|safe }},
+                borderColor: '#22C55E',
+                backgroundColor: 'rgba(34,197,94,0.1)',
+                tension: 0.4
+            }]
+        },
+        options: chartConfig
+    });
+
+    // Revenue Chart
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ revenue_labels|safe }},
+            datasets: [{
+                label: 'REVENUE ($)',
+                data: {{ revenue_data|safe }},
+                backgroundColor: 'rgba(255,255,255,0.8)',
+                borderColor: '#FFFFFF',
+                borderWidth: 1
+            }]
+        },
+        options: chartConfig
+    });
+
+    // Workflow Status Chart
+    new Chart(document.getElementById('workflowStatusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['ACTIVE', 'PAUSED', 'ERROR'],
+            datasets: [{
+                data: {{ workflow_status_data|safe }},
+                backgroundColor: ['#22C55E', '#FBBF24', '#EF4444'],
+                borderWidth: 0
+            }]
+        },
+        options: { ...chartConfig, scales: {} }
+    });
+
+    // Executions Chart
+    new Chart(document.getElementById('executionsChart'), {
+        type: 'line',
+        data: {
+            labels: {{ executions_labels|safe }},
+            datasets: [
+                {
+                    label: 'SUCCESS',
+                    data: {{ executions_success|safe }},
+                    borderColor: '#22C55E',
+                    backgroundColor: 'rgba(34,197,94,0.1)'
+                },
+                {
+                    label: 'ERRORS',
+                    data: {{ executions_errors|safe }},
+                    borderColor: '#EF4444',
+                    backgroundColor: 'rgba(239,68,68,0.1)'
+                }
+            ]
+        },
+        options: chartConfig
+    });
+</script>
+{% endblock %}
