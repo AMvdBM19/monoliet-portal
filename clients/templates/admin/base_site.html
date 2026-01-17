@@ -9,6 +9,28 @@
 </h1>
 {% endblock %}
 
+{% block userlinks %}
+<div style="display: flex; align-items: center; gap: 1rem;">
+    <a href="/admin/clients/portalsettings/1/change/"
+       style="
+           font-family: 'Space Mono', monospace;
+           color: #9B9B9B;
+           text-decoration: none;
+           font-size: 0.75rem;
+           text-transform: uppercase;
+           padding: 6px 12px;
+           border: 1px solid rgba(155,155,155,0.3);
+           border-radius: 0;
+           transition: all 0.3s;
+       "
+       onmouseover="this.style.color='#FFFFFF';this.style.borderColor='#FFFFFF';"
+       onmouseout="this.style.color='#9B9B9B';this.style.borderColor='rgba(155,155,155,0.3)';">
+        ⚙ SETTINGS
+    </a>
+    {{ block.super }}
+</div>
+{% endblock %}
+
 {% block extrastyle %}
 {{ block.super }}
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -58,5 +80,54 @@
     /* Links */
     a { color: #FFFFFF !important; }
     a:hover { color: #9B9B9B !important; }
+
+    /* Settings Page Styling */
+    .glass-container {
+        background: rgba(0,0,0,0.5) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(155,155,155,0.2) !important;
+        border-radius: 4px !important;
+        padding: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+
+    .field-n8n_connection_display {
+        background: transparent !important;
+        border: none !important;
+        padding: 1rem 0 !important;
+    }
+
+    /* Fieldset Headers */
+    fieldset h2 {
+        background: transparent !important;
+        color: #FFFFFF !important;
+        font-family: 'Space Grotesk', sans-serif !important;
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.1em !important;
+        border-bottom: 2px solid rgba(155,155,155,0.2) !important;
+        padding-bottom: 0.5rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Help Text */
+    .help {
+        font-family: 'Space Mono', monospace !important;
+        color: #9B9B9B !important;
+        font-size: 0.75rem !important;
+    }
+
+    /* Checkbox Styling */
+    input[type="checkbox"] {
+        width: 18px !important;
+        height: 18px !important;
+        accent-color: #22C55E !important;
+    }
+
+    /* Number Input */
+    input[type="number"] {
+        width: 100px !important;
+    }
 </style>
 {% endblock %}

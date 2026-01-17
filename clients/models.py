@@ -77,6 +77,12 @@ class Workflow(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='workflows')
     workflow_name = models.CharField(max_length=255)
     n8n_workflow_id = models.CharField(max_length=100, unique=True, help_text="n8n workflow ID")
+    n8n_workflow_url = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text="Direct link to workflow in n8n editor"
+    )
     description = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     last_execution = models.DateTimeField(null=True, blank=True)
@@ -91,6 +97,12 @@ class Workflow(models.Model):
 
     def __str__(self):
         return f"{self.workflow_name} - {self.client.company_name}"
+
+    def save(self, *args, **kwargs):
+        # Auto-generate n8n workflow URL if n8n_workflow_id exists
+        if self.n8n_workflow_id and not self.n8n_workflow_url:
+            self.n8n_workflow_url = f"https://n8n.monoliet.cloud/workflow/{self.n8n_workflow_id}"
+        super().save(*args, **kwargs)
 
 
 class APICredential(models.Model):
@@ -252,3 +264,89 @@ class ClientProfile(models.Model):
         if self.client:
             return f"{self.user.username} - {self.client.company_name}"
         return f"{self.user.username} - No Client Assigned"
+
+
+class PortalSettings(models.Model):
+    """
+    Singleton model for portal configuration.
+    Only one instance should exist.
+    """
+    # n8n Configuration
+    n8n_api_url = models.URLField(
+        max_length=500,
+        default='https://n8n.monoliet.cloud/api/v1',
+        help_text='n8n API base URL'
+    )
+    n8n_api_key = models.CharField(
+        max_length=500,
+        blank=True,
+        help_text='n8n API authentication key'
+    )
+    n8n_connection_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('connected', 'Connected'),
+            ('disconnected', 'Disconnected'),
+            ('error', 'Error'),
+        ],
+        default='disconnected'
+    )
+    n8n_last_checked = models.DateTimeField(blank=True, null=True)
+
+    # General Settings
+    company_name = models.CharField(
+        max_length=255,
+        default='Monoliet',
+        help_text='Your company name'
+    )
+    support_email = models.EmailField(
+        default='info@monoliet.cloud',
+        help_text='Support contact email'
+    )
+    max_clients = models.IntegerField(
+        default=100,
+        help_text='Maximum number of clients allowed'
+    )
+    enable_auto_sync = models.BooleanField(
+        default=True,
+        help_text='Automatically sync n8n data'
+    )
+    sync_interval_minutes = models.IntegerField(
+        default=15,
+        help_text='Minutes between automatic syncs'
+    )
+
+    # Notification Settings
+    slack_webhook_url = models.URLField(
+        max_length=500,
+        blank=True,
+        help_text='Slack webhook for notifications'
+    )
+    enable_email_notifications = models.BooleanField(
+        default=True,
+        help_text='Send email notifications'
+    )
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Portal Settings'
+        verbose_name_plural = 'Portal Settings'
+
+    def __str__(self):
+        return 'Portal Configuration'
+
+    def save(self, *args, **kwargs):
+        # Ensure only one instance exists (singleton pattern)
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        # Prevent deletion
+        pass
+
+    @classmethod
+    def load(cls):
+        """Load the singleton instance."""
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj

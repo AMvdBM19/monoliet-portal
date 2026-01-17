@@ -10,9 +10,14 @@ from django.utils.html import format_html
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
+from django.urls import path
+from django.shortcuts import redirect
+from django.contrib import messages
+from datetime import datetime
+import requests
 from .models import (
     Client, Workflow, APICredential, Execution,
-    Invoice, SupportTicket, ClientProfile
+    Invoice, SupportTicket, ClientProfile, PortalSettings
 )
 
 
@@ -126,7 +131,7 @@ class WorkflowAdmin(admin.ModelAdmin):
 
     list_display = (
         'workflow_name', 'client', 'status_badge',
-        'execution_count', 'last_execution', 'created_at'
+        'n8n_workflow_link', 'execution_count', 'last_execution', 'created_at'
     )
     list_filter = ('status', 'created_at')
     search_fields = ('workflow_name', 'n8n_workflow_id', 'client__company_name')
@@ -135,7 +140,7 @@ class WorkflowAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Workflow Information', {
-            'fields': ('client', 'workflow_name', 'n8n_workflow_id', 'description', 'status')
+            'fields': ('client', 'workflow_name', 'n8n_workflow_id', 'n8n_workflow_url', 'description', 'status')
         }),
         ('Execution Statistics', {
             'fields': ('execution_count', 'last_execution')
@@ -160,6 +165,26 @@ class WorkflowAdmin(admin.ModelAdmin):
             obj.get_status_display()
         )
     status_badge.short_description = 'Status'
+
+    def n8n_workflow_link(self, obj):
+        """Display clickable link to n8n workflow editor."""
+        if obj.n8n_workflow_url:
+            return format_html(
+                '<a href="{}" target="_blank" style="'
+                'background: rgba(255,255,255,0.1); '
+                'color: #22C55E; '
+                'padding: 6px 12px; '
+                'border: 1px solid #22C55E; '
+                'font-family: Space Mono, monospace; '
+                'font-size: 0.75rem; '
+                'text-transform: uppercase; '
+                'text-decoration: none; '
+                'display: inline-block;'
+                '">OPEN IN n8n ↗</a>',
+                obj.n8n_workflow_url
+            )
+        return format_html('<span style="color: #9B9B9B;">NO LINK</span>')
+    n8n_workflow_link.short_description = 'n8n EDITOR'
 
 
 @admin.register(APICredential)
@@ -379,3 +404,190 @@ class ClientProfileAdmin(admin.ModelAdmin):
         """Display user's creation date."""
         return obj.user.date_joined
     created_date.short_description = 'Created'
+
+
+@admin.register(PortalSettings)
+class PortalSettingsAdmin(admin.ModelAdmin):
+    """
+    Custom admin for portal settings with n8n connection testing.
+    """
+
+    def has_add_permission(self, request):
+        # Only allow one settings instance
+        return not PortalSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        # Prevent deletion
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        # Redirect to change view for singleton
+        obj = PortalSettings.load()
+        return redirect(f'/admin/clients/portalsettings/{obj.pk}/change/')
+
+    fieldsets = (
+        ('n8n INTEGRATION', {
+            'fields': (
+                'n8n_api_url',
+                'n8n_api_key',
+                'n8n_connection_display',
+            ),
+            'classes': ('glass-container',),
+        }),
+        ('GENERAL SETTINGS', {
+            'fields': (
+                'company_name',
+                'support_email',
+                'max_clients',
+            ),
+            'classes': ('glass-container',),
+        }),
+        ('AUTOMATION', {
+            'fields': (
+                'enable_auto_sync',
+                'sync_interval_minutes',
+            ),
+            'classes': ('glass-container',),
+        }),
+        ('NOTIFICATIONS', {
+            'fields': (
+                'slack_webhook_url',
+                'enable_email_notifications',
+            ),
+            'classes': ('glass-container',),
+        }),
+    )
+
+    readonly_fields = ['n8n_connection_display']
+
+    def n8n_connection_display(self, obj):
+        """Display n8n connection status with test button."""
+        if obj.n8n_connection_status == 'connected':
+            status_html = format_html(
+                '<div style="'
+                'background: rgba(34,197,94,0.2); '
+                'border: 1px solid #22C55E; '
+                'color: #22C55E; '
+                'padding: 12px; '
+                'border-radius: 4px; '
+                'font-family: Space Mono, monospace; '
+                'margin-bottom: 1rem;'
+                '">'
+                '✓ CONNECTED<br>'
+                '<span style="font-size: 0.75rem; opacity: 0.8;">Last checked: {}</span>'
+                '</div>',
+                obj.n8n_last_checked.strftime('%Y-%m-%d %H:%M') if obj.n8n_last_checked else 'Never'
+            )
+        elif obj.n8n_connection_status == 'error':
+            status_html = format_html(
+                '<div style="'
+                'background: rgba(239,68,68,0.2); '
+                'border: 1px solid #EF4444; '
+                'color: #EF4444; '
+                'padding: 12px; '
+                'border-radius: 4px; '
+                'font-family: Space Mono, monospace; '
+                'margin-bottom: 1rem;'
+                '">'
+                '✗ CONNECTION FAILED<br>'
+                '<span style="font-size: 0.75rem;">Check API URL and key</span>'
+                '</div>'
+            )
+        else:
+            status_html = format_html(
+                '<div style="'
+                'background: rgba(155,155,155,0.2); '
+                'border: 1px solid #9B9B9B; '
+                'color: #9B9B9B; '
+                'padding: 12px; '
+                'border-radius: 4px; '
+                'font-family: Space Mono, monospace; '
+                'margin-bottom: 1rem;'
+                '">'
+                '○ NOT CONFIGURED<br>'
+                '<span style="font-size: 0.75rem;">Enter API credentials</span>'
+                '</div>'
+            )
+
+        # Add test button
+        button_html = format_html(
+            '<a href="{}" style="'
+            'background: #FFFFFF; '
+            'color: #1e1f2b; '
+            'border: 1px solid #1e1f2b; '
+            'padding: 12px 24px; '
+            'font-family: Space Grotesk, sans-serif; '
+            'text-transform: uppercase; '
+            'text-decoration: none; '
+            'display: inline-block; '
+            'font-weight: 500; '
+            'letter-spacing: 0.05em; '
+            'transition: all 0.3s;'
+            '" onmouseover="this.style.background=\'#1e1f2b\';this.style.color=\'#FFFFFF\';this.style.borderColor=\'#FFFFFF\';" '
+            'onmouseout="this.style.background=\'#FFFFFF\';this.style.color=\'#1e1f2b\';this.style.borderColor=\'#1e1f2b\';">'
+            'TEST CONNECTION'
+            '</a>',
+            f'/admin/clients/portalsettings/{obj.pk}/test-connection/'
+        )
+
+        return format_html('{}<br>{}', status_html, button_html)
+
+    n8n_connection_display.short_description = 'CONNECTION STATUS'
+
+    def get_urls(self):
+        """Add custom URL for connection testing."""
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                '<path:object_id>/test-connection/',
+                self.admin_site.admin_view(self.test_connection),
+                name='test-n8n-connection'
+            ),
+        ]
+        return custom_urls + urls
+
+    def test_connection(self, request, object_id):
+        """Test n8n API connection."""
+        portal_settings = PortalSettings.objects.get(pk=object_id)
+
+        if not portal_settings.n8n_api_key:
+            messages.error(request, 'n8n API key not configured')
+            return redirect(f'/admin/clients/portalsettings/{object_id}/change/')
+
+        try:
+            # Test API connection
+            response = requests.get(
+                f"{portal_settings.n8n_api_url}/workflows",
+                headers={'X-N8N-API-KEY': portal_settings.n8n_api_key},
+                timeout=5
+            )
+
+            if response.status_code == 200:
+                portal_settings.n8n_connection_status = 'connected'
+                portal_settings.n8n_last_checked = datetime.now()
+                portal_settings.save()
+
+                workflow_count = len(response.json().get('data', []))
+                messages.success(
+                    request,
+                    f'✓ Connection successful! Found {workflow_count} workflows in n8n.'
+                )
+            else:
+                portal_settings.n8n_connection_status = 'error'
+                portal_settings.save()
+                messages.error(
+                    request,
+                    f'✗ Connection failed: HTTP {response.status_code}'
+                )
+
+        except requests.exceptions.RequestException as e:
+            portal_settings.n8n_connection_status = 'error'
+            portal_settings.save()
+            messages.error(request, f'✗ Connection error: {str(e)}')
+
+        return redirect(f'/admin/clients/portalsettings/{object_id}/change/')
+
+    class Media:
+        css = {
+            'all': ('css/style.css',)
+        }
