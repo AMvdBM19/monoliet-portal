@@ -1,0 +1,202 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}MCP WORKFLOWS // MANAGEMENT{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+    /* Reuse styles from dashboard */
+    .mcp-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .mcp-card {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(155, 155, 155, 0.2);
+        padding: 1.5rem;
+        border-radius: 4px;
+    }
+
+    .workflow-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .workflow-table th {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #9B9B9B;
+        padding: 1rem;
+        border-bottom: 1px solid rgba(155, 155, 155, 0.2);
+        text-align: left;
+    }
+
+    .workflow-table td {
+        font-family: 'Inter', sans-serif;
+        color: #DBDBDB;
+        padding: 1rem;
+        border-bottom: 1px solid rgba(155, 155, 155, 0.1);
+    }
+
+    .workflow-name {
+        font-family: 'Space Grotesk', sans-serif;
+        color: #FFFFFF;
+        font-weight: 500;
+    }
+
+    .workflow-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-btn {
+        background: transparent;
+        border: 1px solid rgba(155, 155, 155, 0.3);
+        color: #9B9B9B;
+        padding: 4px 8px;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .action-btn:hover {
+        border-color: #FFFFFF;
+        color: #FFFFFF;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 2px;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+    }
+
+    .status-active {
+        background: rgba(46, 213, 115, 0.1);
+        color: #2ED573;
+        border: 1px solid #2ED573;
+    }
+
+    .status-inactive {
+        background: rgba(155, 155, 155, 0.1);
+        color: #9B9B9B;
+        border: 1px solid #9B9B9B;
+    }
+
+    .search-bar {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(155, 155, 155, 0.2);
+        color: #DBDBDB;
+        padding: 0.75rem;
+        font-family: 'Inter', sans-serif;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .error-message {
+        background: rgba(255, 71, 87, 0.1);
+        border: 1px solid #FF4757;
+        color: #FF4757;
+        padding: 1rem;
+        border-radius: 4px;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mcp-container">
+    <h1 style="font-family: 'Space Grotesk', sans-serif; color: #FFFFFF; font-size: 2rem; margin-bottom: 2rem; letter-spacing: 0.1em;">
+        MCP WORKFLOWS // MANAGEMENT
+    </h1>
+
+    {% if error %}
+    <div class="error-message">{{ error }}</div>
+    {% else %}
+
+    <!-- Filters -->
+    <div class="mcp-card" style="margin-bottom: 1.5rem;">
+        <form method="get" style="display: flex; gap: 1rem; align-items: center;">
+            <input
+                type="text"
+                name="search"
+                placeholder="Search workflows..."
+                value="{{ request.GET.search }}"
+                class="search-bar"
+            >
+            <label style="display: flex; align-items: center; gap: 0.5rem; color: #DBDBDB; font-family: 'Inter', sans-serif;">
+                <input type="checkbox" name="active_only" value="true" {% if request.GET.active_only %}checked{% endif %}>
+                Active Only
+            </label>
+            <button type="submit" class="action-btn">FILTER</button>
+        </form>
+    </div>
+
+    <!-- Workflows Table -->
+    <div class="mcp-card">
+        <table class="workflow-table">
+            <thead>
+                <tr>
+                    <th>Workflow Name</th>
+                    <th>ID</th>
+                    <th>Status</th>
+                    <th>Tags</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for workflow in workflows %}
+                <tr>
+                    <td class="workflow-name">{{ workflow.name }}</td>
+                    <td><code style="font-family: 'Space Mono', monospace; font-size: 0.8rem; color: #9B9B9B;">{{ workflow.id }}</code></td>
+                    <td>
+                        {% if workflow.active %}
+                        <span class="status-badge status-active">ACTIVE</span>
+                        {% else %}
+                        <span class="status-badge status-inactive">INACTIVE</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% for tag in workflow.tags %}
+                        <span style="background: rgba(155,155,155,0.1); padding: 2px 6px; font-size: 0.75rem; margin-right: 4px;">{{ tag }}</span>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <div class="workflow-actions">
+                            {% if workflow.active %}
+                            <a href="{% url 'admin:mcp_workflow_action' workflow.id 'deactivate' %}" class="action-btn">DEACTIVATE</a>
+                            {% else %}
+                            <a href="{% url 'admin:mcp_workflow_action' workflow.id 'activate' %}" class="action-btn">ACTIVATE</a>
+                            {% endif %}
+                            <a href="{% url 'admin:mcp_workflow_action' workflow.id 'execute' %}" class="action-btn">EXECUTE</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #9B9B9B; padding: 2rem;">
+                        No workflows found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}

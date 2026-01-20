@@ -19,9 +19,20 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from clients.admin_views import admin_dashboard
+from clients import mcp_admin_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # MCP Server management routes
+    path('admin/mcp/', mcp_admin_views.mcp_dashboard, name='admin:mcp_dashboard'),
+    path('admin/mcp/workflows/', mcp_admin_views.mcp_workflows, name='admin:mcp_workflows'),
+    path('admin/mcp/workflows/<str:workflow_id>/<str:action>/',
+         mcp_admin_views.mcp_workflow_action, name='admin:mcp_workflow_action'),
+    path('admin/mcp/api/health/', mcp_admin_views.mcp_health_check, name='admin:mcp_health'),
+    path('admin/mcp/api/stats/', mcp_admin_views.mcp_stats_api, name='admin:mcp_stats'),
+
+    # Existing routes
     path('api/', include('clients.urls')),
     path('', include('clients.web_urls')),
 ]

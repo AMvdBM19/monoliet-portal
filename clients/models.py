@@ -293,6 +293,43 @@ class PortalSettings(models.Model):
     )
     n8n_last_checked = models.DateTimeField(blank=True, null=True)
 
+    # MCP Server Configuration
+    mcp_server_enabled = models.BooleanField(
+        default=False,
+        verbose_name="Enable MCP Server Integration",
+        help_text="Enable MCP server management from admin panel"
+    )
+    mcp_server_url = models.URLField(
+        max_length=500,
+        blank=True,
+        default="http://localhost:8002",
+        verbose_name="MCP Management API URL",
+        help_text="URL of MCP server management API (e.g., http://mcp-api.monoliet.cloud)"
+    )
+    mcp_server_auth_token = models.CharField(
+        max_length=500,
+        blank=True,
+        verbose_name="MCP Server Auth Token",
+        help_text="Authentication token for MCP server API calls (optional, uses portal tokens if empty)"
+    )
+    mcp_last_health_check = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Last Health Check",
+        help_text="Timestamp of last successful MCP server health check"
+    )
+    mcp_server_status = models.CharField(
+        max_length=50,
+        default="unknown",
+        choices=[
+            ('operational', 'Operational'),
+            ('degraded', 'Degraded'),
+            ('offline', 'Offline'),
+            ('unknown', 'Unknown'),
+        ],
+        verbose_name="MCP Server Status"
+    )
+
     # General Settings
     company_name = models.CharField(
         max_length=255,

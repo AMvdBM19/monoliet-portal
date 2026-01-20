@@ -9,7 +9,7 @@ from django.shortcuts import render
 from django.db.models import Count, Sum, Q
 from django.utils import timezone
 from datetime import timedelta
-from .models import Client, Workflow, Execution, Invoice, SupportTicket
+from .models import Client, Workflow, Execution, Invoice, SupportTicket, PortalSettings
 
 
 @staff_member_required
@@ -93,6 +93,10 @@ def admin_dashboard(request):
         executions_success.append(day_executions['success'] or 0)
         executions_errors.append(day_executions['errors'] or 0)
 
+    # Check if MCP Server is enabled
+    portal_settings = PortalSettings.objects.first()
+    mcp_enabled = portal_settings and portal_settings.mcp_server_enabled
+
     context = {
         'total_clients': total_clients,
         'new_clients_this_month': new_clients_this_month,
@@ -110,6 +114,7 @@ def admin_dashboard(request):
         'executions_labels': executions_labels,
         'executions_success': executions_success,
         'executions_errors': executions_errors,
+        'mcp_enabled': mcp_enabled,  # NEW: MCP Server status
     }
 
     return render(request, 'admin/index.html', context)

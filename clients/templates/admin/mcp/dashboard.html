@@ -1,0 +1,251 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}MCP SERVER // COMMAND CENTER{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+    /* Palantir-inspired MCP Dashboard */
+    .mcp-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .mcp-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .mcp-card {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(155, 155, 155, 0.2);
+        padding: 1.5rem;
+        border-radius: 4px;
+    }
+
+    .mcp-card-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #9B9B9B;
+        margin-bottom: 1rem;
+    }
+
+    .mcp-stat {
+        font-family: 'Space Mono', monospace;
+        font-size: 2rem;
+        color: #FFFFFF;
+        margin-bottom: 0.5rem;
+    }
+
+    .mcp-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.875rem;
+        color: #DBDBDB;
+    }
+
+    .mcp-status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 2px;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-operational {
+        background: rgba(46, 213, 115, 0.1);
+        color: #2ED573;
+        border: 1px solid #2ED573;
+    }
+
+    .status-degraded {
+        background: rgba(255, 165, 2, 0.1);
+        color: #FFA502;
+        border: 1px solid #FFA502;
+    }
+
+    .status-offline {
+        background: rgba(255, 71, 87, 0.1);
+        color: #FF4757;
+        border: 1px solid #FF4757;
+    }
+
+    .status-unknown {
+        background: rgba(155, 155, 155, 0.1);
+        color: #9B9B9B;
+        border: 1px solid #9B9B9B;
+    }
+
+    .mcp-workflow-item {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(155, 155, 155, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .mcp-workflow-name {
+        font-family: 'Space Grotesk', sans-serif;
+        color: #FFFFFF;
+        font-size: 0.95rem;
+    }
+
+    .mcp-btn {
+        background: transparent;
+        border: 1px solid rgba(155, 155, 155, 0.3);
+        color: #9B9B9B;
+        padding: 6px 12px;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s;
+        border-radius: 0;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .mcp-btn:hover {
+        border-color: #FFFFFF;
+        color: #FFFFFF;
+    }
+
+    .error-message {
+        background: rgba(255, 71, 87, 0.1);
+        border: 1px solid #FF4757;
+        color: #FF4757;
+        padding: 1rem;
+        border-radius: 4px;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.875rem;
+    }
+
+    .error-message a {
+        color: #FFFFFF;
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mcp-container">
+    <h1 style="font-family: 'Space Grotesk', sans-serif; color: #FFFFFF; font-size: 2rem; margin-bottom: 2rem; letter-spacing: 0.1em;">
+        MCP SERVER // OVERVIEW
+    </h1>
+
+    {% if error %}
+    <div class="error-message">
+        <strong>ERROR:</strong> {{ error }}
+    </div>
+    {% elif not mcp_enabled %}
+    <div class="error-message">
+        MCP Server integration is not enabled. Please configure in <a href="/admin/clients/portalsettings/1/change/">Portal Settings</a>.
+    </div>
+    {% else %}
+
+    <!-- Status Cards -->
+    <div class="mcp-grid">
+        <!-- Server Status -->
+        <div class="mcp-card">
+            <div class="mcp-card-title">Server Status</div>
+            <div class="mcp-stat">
+                <span class="mcp-status-badge status-{{ server_status.status }}">
+                    {{ server_status.status|upper }}
+                </span>
+            </div>
+            <div class="mcp-label">
+                Uptime: {{ server_status.uptime_seconds|floatformat:0 }}s
+            </div>
+        </div>
+
+        <!-- Workflow Stats -->
+        <div class="mcp-card">
+            <div class="mcp-card-title">Total Workflows</div>
+            <div class="mcp-stat">{{ workflow_stats.total_workflows }}</div>
+            <div class="mcp-label">
+                {{ workflow_stats.active_workflows }} active,
+                {{ workflow_stats.paused_workflows }} paused
+            </div>
+        </div>
+
+        <div class="mcp-card">
+            <div class="mcp-card-title">Executions Today</div>
+            <div class="mcp-stat">{{ workflow_stats.total_executions_today }}</div>
+            <div class="mcp-label">
+                Success Rate: {{ workflow_stats.success_rate|floatformat:1 }}%
+            </div>
+        </div>
+
+        <!-- n8n Connection -->
+        <div class="mcp-card">
+            <div class="mcp-card-title">n8n Connection</div>
+            <div class="mcp-stat">
+                {% if server_status.n8n_connected %}
+                <span class="mcp-status-badge status-operational">CONNECTED</span>
+                {% else %}
+                <span class="mcp-status-badge status-offline">DISCONNECTED</span>
+                {% endif %}
+            </div>
+            <div class="mcp-label" style="font-size: 0.75rem; word-break: break-all;">
+                {{ server_status.n8n_url }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Workflows -->
+    <div class="mcp-card" style="margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div class="mcp-card-title" style="margin-bottom: 0;">Recent Workflows</div>
+            <a href="{% url 'admin:mcp_workflows' %}" class="mcp-btn">VIEW ALL</a>
+        </div>
+
+        {% for workflow in workflows %}
+        <div class="mcp-workflow-item">
+            <div>
+                <div class="mcp-workflow-name">{{ workflow.name }}</div>
+                <div class="mcp-label" style="font-size: 0.75rem; color: #9B9B9B;">
+                    ID: {{ workflow.id }}
+                </div>
+            </div>
+            <div>
+                {% if workflow.active %}
+                <span class="mcp-status-badge status-operational">ACTIVE</span>
+                {% else %}
+                <span class="mcp-status-badge status-degraded">PAUSED</span>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="mcp-label" style="text-align: center; padding: 2rem; color: #9B9B9B;">
+            No workflows found
+        </div>
+        {% endfor %}
+    </div>
+
+    {% endif %}
+</div>
+
+<script>
+// Auto-refresh stats every 30 seconds
+setInterval(async () => {
+    try {
+        const response = await fetch('{% url "admin:mcp_stats" %}');
+        const stats = await response.json();
+
+        // Update UI with new stats (basic implementation)
+        console.log('Updated stats:', stats);
+    } catch (error) {
+        console.error('Failed to refresh stats:', error);
+    }
+}, 30000);
+</script>
+{% endblock %}

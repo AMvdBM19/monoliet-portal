@@ -434,6 +434,15 @@ class PortalSettingsAdmin(admin.ModelAdmin):
             ),
             'classes': ('glass-container',),
         }),
+        ('MCP SERVER INTEGRATION', {
+            'fields': (
+                'mcp_server_enabled',
+                'mcp_server_url',
+                'mcp_server_auth_token',
+                'mcp_server_status_display',
+            ),
+            'classes': ('glass-container',),
+        }),
         ('GENERAL SETTINGS', {
             'fields': (
                 'company_name',
@@ -458,7 +467,7 @@ class PortalSettingsAdmin(admin.ModelAdmin):
         }),
     )
 
-    readonly_fields = ['n8n_connection_display']
+    readonly_fields = ['n8n_connection_display', 'mcp_server_status_display']
 
     def n8n_connection_display(self, obj):
         """Display n8n connection status with test button."""
@@ -533,6 +542,76 @@ class PortalSettingsAdmin(admin.ModelAdmin):
         return format_html('{}<br>{}', status_html, button_html)
 
     n8n_connection_display.short_description = 'CONNECTION STATUS'
+
+    def mcp_server_status_display(self, obj):
+        """Display MCP server status with dashboard link."""
+        if not obj.mcp_server_enabled:
+            return format_html(
+                '<div style="'
+                'background: rgba(155,155,155,0.2); '
+                'border: 1px solid #9B9B9B; '
+                'color: #9B9B9B; '
+                'padding: 12px; '
+                'border-radius: 4px; '
+                'font-family: Space Mono, monospace; '
+                'margin-bottom: 1rem;'
+                '">'
+                '○ DISABLED<br>'
+                '<span style="font-size: 0.75rem;">Enable to access MCP dashboard</span>'
+                '</div>'
+            )
+
+        # Status badge based on current status
+        status_colors = {
+            'operational': ('#2ED573', 'rgba(46,213,115,0.2)', '✓'),
+            'degraded': ('#FFA502', 'rgba(255,165,2,0.2)', '⚠'),
+            'offline': ('#EF4444', 'rgba(239,68,68,0.2)', '✗'),
+            'unknown': ('#9B9B9B', 'rgba(155,155,155,0.2)', '?'),
+        }
+
+        color, bg, icon = status_colors.get(obj.mcp_server_status, status_colors['unknown'])
+
+        status_html = format_html(
+            '<div style="'
+            'background: {}; '
+            'border: 1px solid {}; '
+            'color: {}; '
+            'padding: 12px; '
+            'border-radius: 4px; '
+            'font-family: Space Mono, monospace; '
+            'margin-bottom: 1rem;'
+            '">'
+            '{} {}<br>'
+            '<span style="font-size: 0.75rem; opacity: 0.8;">Last checked: {}</span>'
+            '</div>',
+            bg, color, color,
+            icon, obj.mcp_server_status.upper(),
+            obj.mcp_last_health_check.strftime('%Y-%m-%d %H:%M') if obj.mcp_last_health_check else 'Never'
+        )
+
+        # Dashboard link
+        button_html = format_html(
+            '<a href="/admin/mcp/" style="'
+            'background: #FFFFFF; '
+            'color: #1e1f2b; '
+            'border: 1px solid #1e1f2b; '
+            'padding: 12px 24px; '
+            'font-family: Space Grotesk, sans-serif; '
+            'text-transform: uppercase; '
+            'text-decoration: none; '
+            'display: inline-block; '
+            'font-weight: 500; '
+            'letter-spacing: 0.05em; '
+            'transition: all 0.3s;'
+            '" onmouseover="this.style.background=\'#1e1f2b\';this.style.color=\'#FFFFFF\';this.style.borderColor=\'#FFFFFF\';" '
+            'onmouseout="this.style.background=\'#FFFFFF\';this.style.color=\'#1e1f2b\';this.style.borderColor=\'#1e1f2b\';">'
+            'OPEN MCP DASHBOARD'
+            '</a>'
+        )
+
+        return format_html('{}<br>{}', status_html, button_html)
+
+    mcp_server_status_display.short_description = 'MCP SERVER STATUS'
 
     def get_urls(self):
         """Add custom URL for connection testing."""
