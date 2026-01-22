@@ -178,11 +178,11 @@
                     <td>
                         <div class="workflow-actions">
                             {% if workflow.active %}
-                            <a href="{% url 'admin:mcp_workflow_action' workflow.id 'deactivate' %}" class="action-btn">DEACTIVATE</a>
+                            <a href="{% url 'mcp_workflow_action' workflow.id 'deactivate' %}" class="action-btn">DEACTIVATE</a>
                             {% else %}
-                            <a href="{% url 'admin:mcp_workflow_action' workflow.id 'activate' %}" class="action-btn">ACTIVATE</a>
+                            <a href="{% url 'mcp_workflow_action' workflow.id 'activate' %}" class="action-btn">ACTIVATE</a>
                             {% endif %}
-                            <a href="{% url 'admin:mcp_workflow_action' workflow.id 'execute' %}" class="action-btn">EXECUTE</a>
+                            <a href="{% url 'mcp_workflow_action' workflow.id 'execute' %}" class="action-btn">EXECUTE</a>
                         </div>
                     </td>
                 </tr>

@@ -205,7 +205,7 @@
     <div class="mcp-card" style="margin-top: 2rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <div class="mcp-card-title" style="margin-bottom: 0;">Recent Workflows</div>
-            <a href="{% url 'admin:mcp_workflows' %}" class="mcp-btn">VIEW ALL</a>
+            <a href="{% url 'mcp_workflows' %}" class="mcp-btn">VIEW ALL</a>
         </div>
 
         {% for workflow in workflows %}
@@ -238,7 +238,7 @@
 // Auto-refresh stats every 30 seconds
 setInterval(async () => {
     try {
-        const response = await fetch('{% url "admin:mcp_stats" %}');
+        const response = await fetch('{% url "mcp_stats" %}');
         const stats = await response.json();
 
         // Update UI with new stats (basic implementation)
