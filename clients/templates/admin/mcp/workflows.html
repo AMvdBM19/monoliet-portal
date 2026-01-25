@@ -120,9 +120,64 @@
 
 {% block content %}
 <div class="mcp-container">
-    <h1 style="font-family: 'Space Grotesk', sans-serif; color: #FFFFFF; font-size: 2rem; margin-bottom: 2rem; letter-spacing: 0.1em;">
-        MCP WORKFLOWS // MANAGEMENT
-    </h1>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 style="font-family: 'Space Grotesk', sans-serif; color: #FFFFFF; font-size: 2rem; letter-spacing: 0.1em; margin: 0;">
+            MCP COMMAND CENTER
+        </h1>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div style="display: flex; gap: 0; margin-bottom: 2rem; border-bottom: 1px solid rgba(155, 155, 155, 0.2);">
+        <a href="{% url 'mcp_dashboard' %}"
+           style="
+               font-family: 'Space Mono', monospace;
+               font-size: 0.75rem;
+               text-transform: uppercase;
+               letter-spacing: 0.05em;
+               color: #9B9B9B;
+               padding: 0.75rem 1.5rem;
+               text-decoration: none;
+               border-bottom: 2px solid transparent;
+               transition: all 0.3s;
+               margin-bottom: -1px;
+           "
+           onmouseover="this.style.color='#FFFFFF'; this.style.borderBottomColor='rgba(255,255,255,0.5)';"
+           onmouseout="this.style.color='#9B9B9B'; this.style.borderBottomColor='transparent';">
+            OVERVIEW
+        </a>
+        <a href="{% url 'mcp_workflows' %}"
+           style="
+               font-family: 'Space Mono', monospace;
+               font-size: 0.75rem;
+               text-transform: uppercase;
+               letter-spacing: 0.05em;
+               color: #FFFFFF;
+               padding: 0.75rem 1.5rem;
+               text-decoration: none;
+               border-bottom: 2px solid #FFFFFF;
+               background: rgba(255, 255, 255, 0.05);
+               margin-bottom: -1px;
+           ">
+            WORKFLOWS
+        </a>
+        <a href="{% url 'execution_dashboard' %}"
+           style="
+               font-family: 'Space Mono', monospace;
+               font-size: 0.75rem;
+               text-transform: uppercase;
+               letter-spacing: 0.05em;
+               color: #9B9B9B;
+               padding: 0.75rem 1.5rem;
+               text-decoration: none;
+               border-bottom: 2px solid transparent;
+               transition: all 0.3s;
+               margin-bottom: -1px;
+           "
+           onmouseover="this.style.color='#FFFFFF'; this.style.borderBottomColor='rgba(255,255,255,0.5)';"
+           onmouseout="this.style.color='#9B9B9B'; this.style.borderBottomColor='transparent';">
+            EXECUTIONS
+        </a>
+    </div>
 
     {% if error %}
     <div class="error-message">{{ error }}</div>

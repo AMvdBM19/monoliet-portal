@@ -57,6 +57,8 @@ class ExecutionSyncService:
         stats = {"created": 0, "updated": 0, "errors": 0, "skipped": 0}
 
         try:
+            logger.info(f"Starting execution sync with limit={limit}")
+
             # Fetch recent executions from n8n
             response = self.n8n_client.get_executions(
                 limit=min(limit, 250),
@@ -64,24 +66,42 @@ class ExecutionSyncService:
             )
 
             executions = response.get('data', [])
-            logger.info(f"Fetched {len(executions)} executions from n8n")
+            logger.info(f"Fetched {len(executions)} executions from n8n API")
+
+            if not executions:
+                logger.warning("No executions returned from n8n API")
+                return stats
+
+            # Log sample execution for debugging
+            if executions:
+                sample = executions[0]
+                logger.debug(
+                    f"Sample execution: id={sample.get('id')}, "
+                    f"workflowId={sample.get('workflowId')}, "
+                    f"status={sample.get('status')}, "
+                    f"startedAt={sample.get('startedAt')}"
+                )
 
             # Process executions by workflow and date
             execution_groups = self._group_executions_by_workflow_date(executions)
+            logger.info(f"Grouped into {len(execution_groups)} workflow/date combinations")
 
             for (workflow_id, exec_date), exec_list in execution_groups.items():
                 try:
                     result = self._sync_execution_group(workflow_id, exec_date, exec_list)
                     stats[result] += 1
                 except Exception as e:
-                    logger.error(f"Failed to sync execution group {workflow_id}/{exec_date}: {e}")
+                    logger.error(
+                        f"Failed to sync execution group {workflow_id}/{exec_date}: {e}",
+                        exc_info=True
+                    )
                     stats['errors'] += 1
 
             logger.info(f"Execution sync complete: {stats}")
             return stats
 
         except Exception as e:
-            logger.error(f"Execution sync failed: {e}")
+            logger.error(f"Execution sync failed: {e}", exc_info=True)
             stats['errors'] += 1
             return stats
 
@@ -103,6 +123,8 @@ class ExecutionSyncService:
         stats = {"created": 0, "updated": 0, "errors": 0, "skipped": 0}
 
         try:
+            logger.info(f"Syncing executions for workflow {workflow_id} with limit={limit}")
+
             executions = self.n8n_client.get_workflow_executions(
                 workflow_id=workflow_id,
                 limit=limit
@@ -110,21 +132,30 @@ class ExecutionSyncService:
 
             logger.info(f"Fetched {len(executions)} executions for workflow {workflow_id}")
 
+            if not executions:
+                logger.warning(f"No executions found for workflow {workflow_id}")
+                return stats
+
             # Group by date
             execution_groups = self._group_executions_by_workflow_date(executions)
+            logger.info(f"Grouped into {len(execution_groups)} date combinations")
 
             for (wf_id, exec_date), exec_list in execution_groups.items():
                 try:
                     result = self._sync_execution_group(wf_id, exec_date, exec_list)
                     stats[result] += 1
                 except Exception as e:
-                    logger.error(f"Failed to sync execution group: {e}")
+                    logger.error(
+                        f"Failed to sync execution group {wf_id}/{exec_date}: {e}",
+                        exc_info=True
+                    )
                     stats['errors'] += 1
 
+            logger.info(f"Workflow sync complete: {stats}")
             return stats
 
         except Exception as e:
-            logger.error(f"Workflow execution sync failed: {e}")
+            logger.error(f"Workflow execution sync failed: {e}", exc_info=True)
             stats['errors'] += 1
             return stats
 
@@ -142,13 +173,23 @@ class ExecutionSyncService:
             Dict mapping (workflow_id, date) tuples to execution lists
         """
         groups = {}
+        skipped_no_workflow = 0
+        skipped_no_date = 0
 
         for exec_data in executions:
             workflow_id = str(exec_data.get('workflowId', ''))
             started_at = self._parse_datetime(exec_data.get('startedAt'))
 
-            if not workflow_id or not started_at:
+            if not workflow_id:
+                skipped_no_workflow += 1
                 continue
+
+            if not started_at:
+                # Try stoppedAt as fallback
+                started_at = self._parse_datetime(exec_data.get('stoppedAt'))
+                if not started_at:
+                    skipped_no_date += 1
+                    continue
 
             exec_date = started_at.date()
             key = (workflow_id, exec_date)
@@ -156,6 +197,11 @@ class ExecutionSyncService:
             if key not in groups:
                 groups[key] = []
             groups[key].append(exec_data)
+
+        if skipped_no_workflow > 0:
+            logger.warning(f"Skipped {skipped_no_workflow} executions with no workflow ID")
+        if skipped_no_date > 0:
+            logger.warning(f"Skipped {skipped_no_date} executions with no valid date")
 
         return groups
 
@@ -176,11 +222,18 @@ class ExecutionSyncService:
         Returns:
             str: 'created', 'updated', or 'skipped'
         """
+        logger.debug(
+            f"Processing {len(executions)} executions for workflow {workflow_id} on {exec_date}"
+        )
+
         # Find corresponding Django workflow
         try:
             workflow = Workflow.objects.get(n8n_workflow_id=workflow_id)
         except Workflow.DoesNotExist:
-            logger.warning(f"Workflow {workflow_id} not found in database")
+            logger.warning(
+                f"Workflow {workflow_id} not found in database. "
+                f"Create a Workflow record with n8n_workflow_id='{workflow_id}' to track its executions."
+            )
             return 'skipped'
 
         # Calculate statistics for this group
@@ -192,6 +245,11 @@ class ExecutionSyncService:
         error_count = sum(
             1 for e in executions
             if self._map_status(e.get('status')) == 'error'
+        )
+
+        logger.debug(
+            f"Stats for {workflow_id}/{exec_date}: "
+            f"total={total_count}, success={success_count}, error={error_count}"
         )
 
         # Update or create execution record
@@ -206,6 +264,9 @@ class ExecutionSyncService:
                     'error_count': error_count,
                 }
             )
+
+        action = 'Created' if created else 'Updated'
+        logger.debug(f"{action} execution record {execution.id} for {workflow_id}/{exec_date}")
 
         return 'created' if created else 'updated'
 
@@ -240,6 +301,8 @@ class ExecutionSyncService:
         Returns:
             Normalized status string
         """
+        if not n8n_status:
+            return 'error'
         return self.STATUS_MAP.get(n8n_status, 'error')
 
 
