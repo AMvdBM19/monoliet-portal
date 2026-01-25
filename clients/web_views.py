@@ -8,6 +8,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
+from django.http import JsonResponse
+from django.utils import timezone
 from datetime import date, timedelta
 
 from .models import Client, Workflow, Execution, Invoice, SupportTicket
@@ -209,3 +211,155 @@ def create_support_ticket_view(request):
     }
 
     return render(request, 'clients/create_ticket.html', context)
+
+
+@login_required
+def executions_view(request):
+    """
+    Client portal execution view.
+
+    Shows executions only for workflows linked to the client.
+    """
+    # Get client from user profile
+    if not hasattr(request.user, 'client_profile') or not request.user.client_profile.client:
+        return render(request, 'clients/no_client.html')
+
+    client = request.user.client_profile.client
+
+    # Get filter parameters
+    workflow_id = request.GET.get('workflow')
+    days = int(request.GET.get('days', 7))
+
+    # Calculate date range
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=days)
+
+    # Base queryset - only client's workflows
+    executions = Execution.objects.filter(
+        client=client,
+        execution_date__gte=start_date,
+        execution_date__lte=end_date
+    ).select_related('workflow')
+
+    # Apply workflow filter
+    if workflow_id:
+        executions = executions.filter(workflow__n8n_workflow_id=workflow_id)
+
+    # Calculate statistics
+    stats = executions.aggregate(
+        total=Sum('total_count'),
+        success=Sum('success_count'),
+        errors=Sum('error_count')
+    )
+
+    total_executions = stats['total'] or 0
+    total_success = stats['success'] or 0
+    total_errors = stats['errors'] or 0
+
+    success_rate = 0
+    if total_executions > 0:
+        success_rate = (total_success / total_executions) * 100
+
+    # Get recent executions
+    recent_executions = executions.order_by('-execution_date')[:50]
+
+    # Get client's workflows for filter dropdown
+    client_workflows = Workflow.objects.filter(client=client).order_by('workflow_name')
+
+    context = {
+        'client': client,
+        'executions': recent_executions,
+        'workflows': client_workflows,
+        'total_executions': total_executions,
+        'total_success': total_success,
+        'total_errors': total_errors,
+        'success_rate': round(success_rate, 1),
+        'selected_workflow': workflow_id,
+        'selected_days': days,
+    }
+
+    return render(request, 'clients/executions.html', context)
+
+
+@login_required
+def execution_detail_view(request, execution_id):
+    """
+    Client portal execution detail view.
+
+    Only accessible if execution belongs to client's workflow.
+    """
+    # Get client from user profile
+    if not hasattr(request.user, 'client_profile') or not request.user.client_profile.client:
+        return render(request, 'clients/no_client.html')
+
+    client = request.user.client_profile.client
+
+    # Get execution, ensure it belongs to client
+    execution = get_object_or_404(
+        Execution.objects.select_related('workflow'),
+        id=execution_id,
+        client=client
+    )
+
+    # Calculate success rate
+    success_rate = 0
+    if execution.total_count > 0:
+        success_rate = (execution.success_count / execution.total_count) * 100
+
+    context = {
+        'client': client,
+        'execution': execution,
+        'success_rate': round(success_rate, 1),
+    }
+
+    return render(request, 'clients/execution_detail.html', context)
+
+
+@login_required
+def execution_stats_api(request):
+    """
+    AJAX endpoint for client execution statistics.
+
+    Returns stats for dashboard auto-refresh (client-filtered).
+    """
+    # Get client from user profile
+    if not hasattr(request.user, 'client_profile') or not request.user.client_profile.client:
+        return JsonResponse({'error': 'No client assigned'}, status=403)
+
+    client = request.user.client_profile.client
+
+    days = int(request.GET.get('days', 7))
+    workflow_id = request.GET.get('workflow')
+
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=days)
+
+    executions = Execution.objects.filter(
+        client=client,
+        execution_date__gte=start_date,
+        execution_date__lte=end_date
+    )
+
+    if workflow_id:
+        executions = executions.filter(workflow__n8n_workflow_id=workflow_id)
+
+    stats = executions.aggregate(
+        total=Sum('total_count'),
+        success=Sum('success_count'),
+        errors=Sum('error_count')
+    )
+
+    total_executions = stats['total'] or 0
+    total_success = stats['success'] or 0
+    total_errors = stats['errors'] or 0
+
+    success_rate = 0
+    if total_executions > 0:
+        success_rate = (total_success / total_executions) * 100
+
+    return JsonResponse({
+        'total_executions': total_executions,
+        'total_success': total_success,
+        'total_errors': total_errors,
+        'success_rate': round(success_rate, 1),
+    })

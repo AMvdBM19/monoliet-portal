@@ -8,7 +8,9 @@
       "Bash(docker ps:*)",
       "Bash(python -m py_compile:*)",
       "Bash(python:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(ls -la \"C:\\\\Users\\\\Andres\\\\Desktop\\\\Monoliet Portal Repository\\\\monoliet-portal\\\\clients\\\\templates\\\\admin\"\" 2>/dev/null || dir \"C:UsersAndresDesktopMonoliet Portal Repositorymonoliet-portalclientstemplatesadmin \")",
+      "Bash(ls:*)"
     ]
   }
 }

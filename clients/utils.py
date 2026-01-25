@@ -161,35 +161,106 @@ class N8NAPIClient:
         result = self._make_request('GET', 'workflows')
         return result.get('data', [])
 
-    def get_executions(self, workflow_id: Optional[str] = None, limit: int = 100) -> List[Dict]:
+    def get_executions(
+        self,
+        workflow_id: Optional[str] = None,
+        status: Optional[str] = None,
+        limit: int = 100,
+        include_data: bool = False,
+        cursor: Optional[str] = None
+    ) -> Dict:
         """
         Fetch workflow executions from n8n.
 
         Args:
             workflow_id: Optional workflow ID to filter by
+            status: Filter by status (success, error, running, waiting, canceled)
+            limit: Maximum number of executions to return (max 250)
+            include_data: Include full execution data in response
+            cursor: Pagination cursor for fetching next page
+
+        Returns:
+            Dict containing 'data' list and optional 'nextCursor'
+        """
+        params = {
+            'limit': min(limit, 250),
+            'includeData': 'true' if include_data else 'false'
+        }
+
+        if workflow_id:
+            params['workflowId'] = workflow_id
+        if status:
+            params['status'] = status
+        if cursor:
+            params['cursor'] = cursor
+
+        return self._make_request('GET', 'executions', params=params)
+
+    def get_executions_list(
+        self,
+        workflow_id: Optional[str] = None,
+        status: Optional[str] = None,
+        limit: int = 100
+    ) -> List[Dict]:
+        """
+        Fetch workflow executions as a simple list.
+
+        Convenience method that returns just the data array.
+
+        Args:
+            workflow_id: Optional workflow ID to filter by
+            status: Optional status filter
             limit: Maximum number of executions to return
 
         Returns:
             List of execution dictionaries
         """
-        params = {'limit': limit}
-        if workflow_id:
-            params['workflowId'] = workflow_id
-
-        result = self._make_request('GET', 'executions', params=params)
+        result = self.get_executions(
+            workflow_id=workflow_id,
+            status=status,
+            limit=limit,
+            include_data=False
+        )
         return result.get('data', [])
 
-    def get_execution(self, execution_id: str) -> Dict:
+    def get_execution(self, execution_id: str, include_data: bool = True) -> Dict:
         """
-        Fetch a specific execution from n8n.
+        Fetch a specific execution from n8n with detailed data.
 
         Args:
             execution_id: The execution ID
+            include_data: Include full execution data/logs
 
         Returns:
             Dictionary containing execution details
         """
-        return self._make_request('GET', f'executions/{execution_id}')
+        params = {'includeData': 'true' if include_data else 'false'}
+        return self._make_request('GET', f'executions/{execution_id}', params=params)
+
+    def get_workflow_executions(
+        self,
+        workflow_id: str,
+        status: Optional[str] = None,
+        limit: int = 50
+    ) -> List[Dict]:
+        """
+        Fetch executions for a specific workflow.
+
+        Convenience method for workflow-specific queries.
+
+        Args:
+            workflow_id: n8n workflow ID
+            status: Optional status filter
+            limit: Max results to return
+
+        Returns:
+            List of execution objects
+        """
+        return self.get_executions_list(
+            workflow_id=workflow_id,
+            status=status,
+            limit=limit
+        )
 
     def activate_workflow(self, workflow_id: str) -> Dict:
         """
@@ -262,6 +333,16 @@ def get_overdue_invoices() -> List:
         status='pending',
         due_date__lt=date.today()
     )
+
+
+def get_n8n_client() -> N8NAPIClient:
+    """
+    Get an instance of the N8N API client.
+
+    Returns:
+        N8NAPIClient instance configured from settings
+    """
+    return N8NAPIClient()
 
 
 def get_client_statistics(client_id: str) -> Dict:

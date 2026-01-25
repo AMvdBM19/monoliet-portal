@@ -1,0 +1,199 @@
+{% extends "clients/base.html" %}
+{% load static %}
+
+{% block title %}Executions - {{ client.company_name }} | Monoliet Portal{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="font-primary text-3xl text-white uppercase tracking-wider">EXECUTION MONITOR</h1>
+            <p class="font-secondary text-accent text-sm mt-2">Real-time workflow execution analytics</p>
+        </div>
+        <span class="font-secondary text-accent text-xs" id="refresh-indicator">Auto-refresh: 30s</span>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="glass-container">
+            <div class="font-secondary text-accent text-xs uppercase tracking-wider mb-3">Total Executions</div>
+            <div class="font-secondary text-4xl text-white font-bold" id="stat-total">{{ total_executions }}</div>
+            <div class="font-text text-accent text-sm mt-2">Last {{ selected_days }} days</div>
+        </div>
+
+        <div class="glass-container">
+            <div class="font-secondary text-accent text-xs uppercase tracking-wider mb-3">Successful</div>
+            <div class="font-secondary text-4xl font-bold" style="color: #2ED573;" id="stat-success">{{ total_success }}</div>
+            <div class="font-text text-accent text-sm mt-2">Completed without errors</div>
+        </div>
+
+        <div class="glass-container">
+            <div class="font-secondary text-accent text-xs uppercase tracking-wider mb-3">Failed</div>
+            <div class="font-secondary text-4xl font-bold" style="color: #FF4757;" id="stat-errors">{{ total_errors }}</div>
+            <div class="font-text text-accent text-sm mt-2">Errors detected</div>
+        </div>
+
+        <div class="glass-container">
+            <div class="font-secondary text-accent text-xs uppercase tracking-wider mb-3">Success Rate</div>
+            <div class="font-secondary text-4xl text-white font-bold" id="stat-rate">{{ success_rate }}%</div>
+            <div class="font-text text-accent text-sm mt-2">Overall performance</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="glass-container mb-8">
+        <div class="flex flex-wrap gap-4 items-end">
+            <div class="flex flex-col gap-2">
+                <label class="font-secondary text-accent text-xs uppercase tracking-wider">Workflow</label>
+                <select name="workflow" class="bg-black/30 border border-white/20 text-white px-4 py-2 font-text text-sm min-w-[200px] focus:border-white focus:outline-none">
+                    <option value="">All Workflows</option>
+                    {% for workflow in workflows %}
+                    <option value="{{ workflow.n8n_workflow_id }}" {% if selected_workflow == workflow.n8n_workflow_id %}selected{% endif %}>
+                        {{ workflow.workflow_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <label class="font-secondary text-accent text-xs uppercase tracking-wider">Time Range</label>
+                <select name="days" class="bg-black/30 border border-white/20 text-white px-4 py-2 font-text text-sm focus:border-white focus:outline-none">
+                    <option value="1" {% if selected_days == 1 %}selected{% endif %}>Last 24 Hours</option>
+                    <option value="7" {% if selected_days == 7 %}selected{% endif %}>Last 7 Days</option>
+                    <option value="30" {% if selected_days == 30 %}selected{% endif %}>Last 30 Days</option>
+                    <option value="90" {% if selected_days == 90 %}selected{% endif %}>Last 90 Days</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-primary">FILTER</button>
+            <a href="{% url 'portal:executions' %}" class="btn-secondary">RESET</a>
+        </div>
+    </form>
+
+    <!-- Executions Table -->
+    <div class="glass-container overflow-hidden">
+        <table class="w-full">
+            <thead>
+                <tr class="border-b border-white/20">
+                    <th class="font-secondary text-accent text-xs uppercase tracking-wider text-left p-4 bg-black/30">Date</th>
+                    <th class="font-secondary text-accent text-xs uppercase tracking-wider text-left p-4 bg-black/30">Workflow</th>
+                    <th class="font-secondary text-accent text-xs uppercase tracking-wider text-left p-4 bg-black/30">Total</th>
+                    <th class="font-secondary text-accent text-xs uppercase tracking-wider text-left p-4 bg-black/30">Success</th>
+                    <th class="font-secondary text-accent text-xs uppercase tracking-wider text-left p-4 bg-black/30">Errors</th>
+                    <th class="font-secondary text-accent text-xs uppercase tracking-wider text-left p-4 bg-black/30">Rate</th>
+                    <th class="font-secondary text-accent text-xs uppercase tracking-wider text-left p-4 bg-black/30">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for execution in executions %}
+                <tr class="border-b border-white/10 hover:bg-white/5 transition-colors">
+                    <td class="p-4 font-secondary text-accent text-sm">{{ execution.execution_date|date:"Y-m-d" }}</td>
+                    <td class="p-4 font-primary text-white">{{ execution.workflow.workflow_name }}</td>
+                    <td class="p-4 font-text text-white font-semibold">{{ execution.total_count }}</td>
+                    <td class="p-4 font-text" style="color: #2ED573;">{{ execution.success_count }}</td>
+                    <td class="p-4 font-text" style="color: #FF4757;">{{ execution.error_count }}</td>
+                    <td class="p-4 font-text text-white">
+                        {% if execution.total_count > 0 %}
+                            {% widthratio execution.success_count execution.total_count 100 %}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td class="p-4">
+                        <a href="{% url 'portal:execution-detail' execution.id %}" class="btn-secondary text-xs py-1 px-3">
+                            VIEW
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="p-8 text-center font-secondary text-accent">
+                        No executions found for the selected filters
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .glass-container {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(155, 155, 155, 0.2);
+        border-radius: 4px;
+        padding: 1.5rem;
+    }
+
+    .btn-primary {
+        background: #FFFFFF;
+        color: #0B0D10;
+        border: 1px solid #FFFFFF;
+        padding: 0.5rem 1rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+    }
+
+    .btn-primary:hover {
+        background: #0B0D10;
+        color: #FFFFFF;
+    }
+
+    .btn-secondary {
+        background: transparent;
+        border: 1px solid rgba(155, 155, 155, 0.3);
+        color: #9B9B9B;
+        padding: 0.5rem 1rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-secondary:hover {
+        border-color: #FFFFFF;
+        color: #FFFFFF;
+    }
+</style>
+
+<script>
+    // Auto-refresh stats every 30 seconds
+    async function refreshStats() {
+        const indicator = document.getElementById('refresh-indicator');
+        indicator.textContent = 'Updating...';
+        indicator.style.color = '#2ED573';
+
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const response = await fetch('{% url "portal:execution-stats-api" %}?' + params.toString());
+            const stats = await response.json();
+
+            document.getElementById('stat-total').textContent = stats.total_executions;
+            document.getElementById('stat-success').textContent = stats.total_success;
+            document.getElementById('stat-errors').textContent = stats.total_errors;
+            document.getElementById('stat-rate').textContent = stats.success_rate + '%';
+
+            indicator.textContent = 'Updated: ' + new Date().toLocaleTimeString();
+        } catch (error) {
+            console.error('Failed to refresh stats:', error);
+            indicator.textContent = 'Refresh failed';
+        }
+
+        setTimeout(() => {
+            indicator.style.color = '#9B9B9B';
+            indicator.textContent = 'Auto-refresh: 30s';
+        }, 2000);
+    }
+
+    setInterval(refreshStats, 30000);
+</script>
+{% endblock %}

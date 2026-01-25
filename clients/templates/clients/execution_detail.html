@@ -1,0 +1,141 @@
+{% extends "clients/base.html" %}
+{% load static %}
+
+{% block title %}Execution {{ execution.execution_date }} - {{ client.company_name }} | Monoliet Portal{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="{% url 'portal:executions' %}" class="btn-secondary mb-4 inline-block">
+            ← BACK TO EXECUTIONS
+        </a>
+        <h1 class="font-primary text-3xl text-white uppercase tracking-wider">
+            EXECUTION // {{ execution.execution_date|date:"Y-m-d" }}
+        </h1>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="glass-container text-center">
+            <div class="font-secondary text-4xl text-white font-bold">{{ execution.total_count }}</div>
+            <div class="font-secondary text-accent text-xs uppercase tracking-wider mt-2">Total Executions</div>
+        </div>
+
+        <div class="glass-container text-center">
+            <div class="font-secondary text-4xl font-bold" style="color: #2ED573;">{{ execution.success_count }}</div>
+            <div class="font-secondary text-accent text-xs uppercase tracking-wider mt-2">Successful</div>
+        </div>
+
+        <div class="glass-container text-center">
+            <div class="font-secondary text-4xl font-bold" style="color: #FF4757;">{{ execution.error_count }}</div>
+            <div class="font-secondary text-accent text-xs uppercase tracking-wider mt-2">Failed</div>
+        </div>
+
+        <div class="glass-container text-center">
+            <div class="font-secondary text-4xl font-bold" style="color: {% if success_rate >= 90 %}#2ED573{% elif success_rate >= 70 %}#FBBF24{% else %}#FF4757{% endif %};">
+                {{ success_rate }}%
+            </div>
+            <div class="font-secondary text-accent text-xs uppercase tracking-wider mt-2">Success Rate</div>
+            <!-- Progress bar -->
+            <div class="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
+                <div class="h-full rounded-full" style="width: {{ success_rate }}%; background: linear-gradient(90deg, #2ED573 0%, #22C55E 100%);"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Execution Details -->
+    <div class="glass-container mb-8">
+        <h2 class="font-primary text-xl text-white uppercase tracking-wider mb-6">EXECUTION DETAILS</h2>
+
+        <div class="space-y-4">
+            <div class="flex py-4 border-b border-white/10">
+                <div class="w-48 font-secondary text-accent text-xs uppercase tracking-wider">Workflow</div>
+                <div class="font-text text-white">{{ execution.workflow.workflow_name }}</div>
+            </div>
+
+            <div class="flex py-4 border-b border-white/10">
+                <div class="w-48 font-secondary text-accent text-xs uppercase tracking-wider">Execution Date</div>
+                <div class="font-text text-white">{{ execution.execution_date|date:"F d, Y" }}</div>
+            </div>
+
+            <div class="flex py-4 border-b border-white/10">
+                <div class="w-48 font-secondary text-accent text-xs uppercase tracking-wider">Workflow Status</div>
+                <div class="font-text">
+                    {% if execution.workflow.status == 'active' %}
+                        <span style="color: #2ED573;">● ACTIVE</span>
+                    {% elif execution.workflow.status == 'paused' %}
+                        <span style="color: #FBBF24;">● PAUSED</span>
+                    {% else %}
+                        <span style="color: #FF4757;">● ERROR</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex py-4">
+                <div class="w-48 font-secondary text-accent text-xs uppercase tracking-wider">Record Created</div>
+                <div class="font-text text-accent">{{ execution.created_at|date:"F d, Y H:i" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workflow Information -->
+    <div class="glass-container">
+        <h2 class="font-primary text-xl text-white uppercase tracking-wider mb-6">WORKFLOW INFORMATION</h2>
+
+        <div class="space-y-4">
+            <div class="flex py-4 border-b border-white/10">
+                <div class="w-48 font-secondary text-accent text-xs uppercase tracking-wider">Name</div>
+                <div class="font-text text-white">{{ execution.workflow.workflow_name }}</div>
+            </div>
+
+            {% if execution.workflow.description %}
+            <div class="flex py-4 border-b border-white/10">
+                <div class="w-48 font-secondary text-accent text-xs uppercase tracking-wider">Description</div>
+                <div class="font-text text-white">{{ execution.workflow.description }}</div>
+            </div>
+            {% endif %}
+
+            <div class="flex py-4 border-b border-white/10">
+                <div class="w-48 font-secondary text-accent text-xs uppercase tracking-wider">Total Executions</div>
+                <div class="font-text text-white">{{ execution.workflow.execution_count }}</div>
+            </div>
+
+            {% if execution.workflow.last_execution %}
+            <div class="flex py-4">
+                <div class="w-48 font-secondary text-accent text-xs uppercase tracking-wider">Last Execution</div>
+                <div class="font-text text-accent">{{ execution.workflow.last_execution|date:"F d, Y H:i" }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .glass-container {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(155, 155, 155, 0.2);
+        border-radius: 4px;
+        padding: 1.5rem;
+    }
+
+    .btn-secondary {
+        background: transparent;
+        border: 1px solid rgba(155, 155, 155, 0.3);
+        color: #9B9B9B;
+        padding: 0.5rem 1rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+        border-color: #FFFFFF;
+        color: #FFFFFF;
+    }
+</style>
+{% endblock %}

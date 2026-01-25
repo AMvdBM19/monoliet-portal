@@ -83,7 +83,7 @@
                 <p style="font-family: 'Inter', sans-serif; color: #DBDBDB; margin-bottom: 1rem; font-size: 0.95rem;">
                     Manage n8n workflows through the MCP server interface. Monitor status, execute workflows, and view real-time analytics.
                 </p>
-                <a href="{% url 'admin:mcp_dashboard' %}"
+                <a href="{% url 'mcp_dashboard' %}"
                    style="
                        display: inline-block;
                        background: transparent;
@@ -112,6 +112,45 @@
         </div>
     </div>
     {% endif %}
+
+    <!-- Execution Monitor Card -->
+    <div class="stat-card" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(30,31,43,0.5) 100%); border: 1px solid rgba(52,152,219,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h2 style="font-family: 'Space Grotesk', sans-serif; color: #FFFFFF; margin-bottom: 1rem; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em;">
+                    EXECUTION MONITOR
+                </h2>
+                <p style="font-family: 'Inter', sans-serif; color: #DBDBDB; margin-bottom: 1rem; font-size: 0.95rem;">
+                    Monitor and analyze n8n workflow executions in real-time. View success rates, track errors, and analyze execution trends.
+                </p>
+                <a href="{% url 'execution_dashboard' %}"
+                   style="
+                       display: inline-block;
+                       background: transparent;
+                       border: 1px solid rgba(52,152,219,0.5);
+                       color: #3498DB;
+                       padding: 10px 20px;
+                       font-family: 'Space Mono', monospace;
+                       font-size: 0.8rem;
+                       text-transform: uppercase;
+                       text-decoration: none;
+                       transition: all 0.3s;
+                       border-radius: 2px;
+                       letter-spacing: 0.05em;
+                   "
+                   onmouseover="this.style.borderColor='#3498DB'; this.style.background='rgba(52,152,219,0.1)';"
+                   onmouseout="this.style.borderColor='rgba(52,152,219,0.5)'; this.style.background='transparent';">
+                    OPEN EXECUTION MONITOR →
+                </a>
+            </div>
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-family: 'Space Mono', monospace; font-size: 3rem; color: #3498DB;">📊</div>
+                <div style="font-family: 'Space Mono', monospace; font-size: 0.7rem; color: #9B9B9B; margin-top: 0.5rem;">
+                    EXECUTIONS
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Standard Admin Apps -->
     <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; color: #FFFFFF; text-transform: uppercase; margin: 2rem 0 1rem;">SYSTEM MODULES</h2>

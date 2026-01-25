@@ -1,0 +1,276 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}EXECUTION DETAIL // {{ execution.execution_date }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .detail-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .detail-header {
+        margin-bottom: 2rem;
+    }
+
+    .detail-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 2rem;
+        color: #FFFFFF;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-top: 1rem;
+    }
+
+    .back-btn {
+        background: transparent;
+        border: 1px solid rgba(155, 155, 155, 0.3);
+        color: #9B9B9B;
+        padding: 0.5rem 1rem;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .back-btn:hover {
+        border-color: #FFFFFF;
+        color: #FFFFFF;
+    }
+
+    .detail-card {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(155, 155, 155, 0.2);
+        padding: 2rem;
+        border-radius: 4px;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-card-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.2rem;
+        color: #FFFFFF;
+        margin-bottom: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .detail-row {
+        display: flex;
+        padding: 1rem 0;
+        border-bottom: 1px solid rgba(155, 155, 155, 0.1);
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #9B9B9B;
+        width: 200px;
+        flex-shrink: 0;
+    }
+
+    .detail-value {
+        font-family: 'Inter', sans-serif;
+        color: #FFFFFF;
+        flex-grow: 1;
+    }
+
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(155, 155, 155, 0.2);
+        padding: 1.5rem;
+        border-radius: 4px;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-family: 'Space Mono', monospace;
+        font-size: 2.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-family: 'Space Mono', monospace;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #9B9B9B;
+    }
+
+    .stat-success { color: #2ED573; }
+    .stat-error { color: #FF4757; }
+    .stat-total { color: #FFFFFF; }
+
+    .progress-bar {
+        height: 8px;
+        background: rgba(155, 155, 155, 0.2);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 1rem;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #2ED573 0%, #22C55E 100%);
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <div class="detail-header">
+        <a href="{% url 'execution_dashboard' %}" class="back-btn">← BACK TO DASHBOARD</a>
+        <h1 class="detail-title">EXECUTION // {{ execution.execution_date|date:"Y-m-d" }}</h1>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-value stat-total">{{ execution.total_count }}</div>
+            <div class="stat-label">Total Executions</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-value stat-success">{{ execution.success_count }}</div>
+            <div class="stat-label">Successful</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-value stat-error">{{ execution.error_count }}</div>
+            <div class="stat-label">Failed</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-value" style="color: {% if success_rate >= 90 %}#2ED573{% elif success_rate >= 70 %}#FBBF24{% else %}#FF4757{% endif %};">
+                {{ success_rate }}%
+            </div>
+            <div class="stat-label">Success Rate</div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ success_rate }}%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Execution Details -->
+    <div class="detail-card">
+        <h2 class="detail-card-title">Execution Details</h2>
+
+        <div class="detail-row">
+            <div class="detail-label">Workflow</div>
+            <div class="detail-value">{{ execution.workflow.workflow_name }}</div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-label">Workflow ID</div>
+            <div class="detail-value" style="font-family: 'Space Mono', monospace; color: #9B9B9B;">
+                {{ execution.workflow.n8n_workflow_id }}
+            </div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-label">Client</div>
+            <div class="detail-value">{{ execution.client.company_name }}</div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-label">Execution Date</div>
+            <div class="detail-value">{{ execution.execution_date|date:"F d, Y" }}</div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-label">Record Created</div>
+            <div class="detail-value" style="color: #9B9B9B;">{{ execution.created_at|date:"F d, Y H:i" }}</div>
+        </div>
+    </div>
+
+    <!-- Workflow Information -->
+    <div class="detail-card">
+        <h2 class="detail-card-title">Workflow Information</h2>
+
+        <div class="detail-row">
+            <div class="detail-label">Status</div>
+            <div class="detail-value">
+                {% if execution.workflow.status == 'active' %}
+                    <span style="color: #2ED573;">● ACTIVE</span>
+                {% elif execution.workflow.status == 'paused' %}
+                    <span style="color: #FBBF24;">● PAUSED</span>
+                {% else %}
+                    <span style="color: #FF4757;">● ERROR</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-label">Description</div>
+            <div class="detail-value">{{ execution.workflow.description|default:"No description available" }}</div>
+        </div>
+
+        {% if execution.workflow.n8n_workflow_url %}
+        <div class="detail-row">
+            <div class="detail-label">n8n Editor</div>
+            <div class="detail-value">
+                <a href="{{ execution.workflow.n8n_workflow_url }}" target="_blank" class="back-btn" style="padding: 0.25rem 0.75rem; font-size: 0.65rem;">
+                    OPEN IN N8N →
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Client Information -->
+    <div class="detail-card">
+        <h2 class="detail-card-title">Client Information</h2>
+
+        <div class="detail-row">
+            <div class="detail-label">Company</div>
+            <div class="detail-value">{{ execution.client.company_name }}</div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-label">Contact</div>
+            <div class="detail-value">{{ execution.client.contact_name }}</div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-label">Email</div>
+            <div class="detail-value">{{ execution.client.email }}</div>
+        </div>
+
+        <div class="detail-row">
+            <div class="detail-label">Status</div>
+            <div class="detail-value">
+                {% if execution.client.status == 'active' %}
+                    <span style="color: #2ED573;">● ACTIVE</span>
+                {% elif execution.client.status == 'paused' %}
+                    <span style="color: #FBBF24;">● PAUSED</span>
+                {% else %}
+                    <span style="color: #FF4757;">● CHURNED</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
