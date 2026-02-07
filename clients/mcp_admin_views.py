@@ -153,7 +153,7 @@ def mcp_workflow_action(request, workflow_id, action):
         messages.error(request, f"Action failed: {str(e)}")
 
     # Redirect back to workflows page
-    return redirect('admin:mcp_workflows')
+    return redirect('mcp_workflows')
 
 
 @staff_member_required
