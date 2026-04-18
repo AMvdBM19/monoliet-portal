@@ -9,7 +9,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ClientViewSet, WorkflowViewSet, APICredentialViewSet,
     ExecutionViewSet, InvoiceViewSet, SupportTicketViewSet,
-    CustomAuthToken, logout_view
+    CustomAuthToken, logout_view, intake_session_view
 )
 
 # Create a router and register our viewsets
@@ -29,4 +29,7 @@ urlpatterns = [
 
     # Include router URLs
     path('', include(router.urls)),
+
+    # Notion intake session endpoint (n8n / Telegram bot)
+    path('intake/session/<str:chat_id>/', intake_session_view, name='intake-session'),
 ]

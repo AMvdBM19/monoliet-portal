@@ -27,7 +27,7 @@ SECRET_KEY = config('SECRET_KEY', default='dev-secret-key-change-in-production-d
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,monoliet-django').split(',')
 
 # CSRF trusted origins
 CSRF_TRUSTED_ORIGINS = config(
@@ -212,3 +212,6 @@ N8N_API_KEY = config('N8N_API_KEY', default='')
 
 # Encryption Key for API Credentials
 ENCRYPTION_KEY = config('ENCRYPTION_KEY', default='')
+
+# Notion Intake Session token (used by n8n to authenticate intake API calls)
+INTAKE_TOKEN = config('INTAKE_TOKEN', default='change-me')

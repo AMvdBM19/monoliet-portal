@@ -387,3 +387,17 @@ class PortalSettings(models.Model):
         """Load the singleton instance."""
         obj, created = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class NotionIntakeSession(models.Model):
+    """Stores stateful Telegram conversation sessions for Notion intake via n8n."""
+    chat_id    = models.CharField(max_length=64, unique=True)
+    entry_type = models.CharField(max_length=20, null=True, blank=True)  # 'idea' | 'project' | 'decision'
+    draft      = models.JSONField(default=dict)
+    history    = models.JSONField(default=list)  # Claude messages array [{role, content}]
+    status     = models.CharField(max_length=20, default='active')  # 'active' | 'done' | 'cancelled'
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"IntakeSession {self.chat_id} ({self.status})"

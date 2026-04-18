@@ -16,11 +16,12 @@ from django.utils import timezone
 from datetime import datetime, timedelta, date
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import (
     Client, Workflow, APICredential, Execution,
-    Invoice, SupportTicket, ClientProfile
+    Invoice, SupportTicket, ClientProfile, NotionIntakeSession
 )
 from .serializers import (
     ClientSerializer, ClientLimitedSerializer,
@@ -407,3 +408,46 @@ def logout_view(request):
         return Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@csrf_exempt
+def intake_session_view(request, chat_id):
+    """Internal endpoint for n8n to manage Telegram intake sessions. Token-auth only."""
+    from django.conf import settings as django_settings
+    token = request.headers.get('X-Intake-Token', '')
+    if token != django_settings.INTAKE_TOKEN:
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+
+    if request.method == 'GET':
+        try:
+            session = NotionIntakeSession.objects.get(chat_id=chat_id)
+            return JsonResponse({
+                'chat_id': session.chat_id,
+                'entry_type': session.entry_type,
+                'draft': session.draft,
+                'history': session.history,
+                'status': session.status,
+                'exists': True,
+            })
+        except NotionIntakeSession.DoesNotExist:
+            return JsonResponse({'exists': False})
+
+    elif request.method == 'POST':
+        import json
+        data = json.loads(request.body)
+        session, _ = NotionIntakeSession.objects.update_or_create(
+            chat_id=chat_id,
+            defaults={
+                'entry_type': data.get('entry_type'),
+                'draft': data.get('draft', {}),
+                'history': data.get('history', []),
+                'status': data.get('status', 'active'),
+            }
+        )
+        return JsonResponse({'chat_id': session.chat_id, 'status': session.status})
+
+    elif request.method == 'DELETE':
+        NotionIntakeSession.objects.filter(chat_id=chat_id).delete()
+        return JsonResponse({'deleted': True})
+
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
