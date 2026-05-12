@@ -1,81 +1,83 @@
 {% extends "clients/base.html" %}
 
 {% block title %}Workflows - Monoliet Portal{% endblock %}
-{% block page_title %}Workflows{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <span class="page-header__eyebrow">AUTOMATION</span>
-    <h1 class="page-header__title">Workflows</h1>
-    <p class="page-header__sub">Active automation systems running for your organization.</p>
-</div>
+<div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8 fade-in">
+            <h1 class="font-primary text-4xl font-bold text-white mb-2">WORKFLOWS</h1>
+            <p class="font-secondary text-accent text-sm uppercase tracking-wider">Active Automation Systems</p>
+        </div>
 
-<div class="glass-card glass-card--flat">
-    {% if workflows %}
-    <div class="overflow-x-auto">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>NAME</th>
-                    <th>STATUS</th>
-                    <th>LAST EXECUTION</th>
-                    <th>SUCCESS RATE (30D)</th>
-                    <th>TOTAL RUNS (30D)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for workflow in workflows %}
-                <tr>
-                    <td>
-                        <div class="text-primary">{{ workflow.workflow_name }}</div>
-                        {% if workflow.description %}
-                        <div class="label mt-1">{{ workflow.description|truncatewords:15 }}</div>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if workflow.status == 'active' %}
-                        <span class="badge badge--green">ACTIVE</span>
-                        {% elif workflow.status == 'paused' %}
-                        <span class="badge badge--yellow">PAUSED</span>
-                        {% else %}
-                        <span class="badge badge--red">ERROR</span>
-                        {% endif %}
-                    </td>
-                    <td class="mono text-muted">
-                        {% if workflow.last_execution %}
-                        {{ workflow.last_execution|date:"Y-m-d H:i" }}
-                        {% else %}
-                        NEVER
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if workflow.recent_total > 0 %}
-                        <div class="flex" style="align-items: center;">
-                            <div style="width: 96px; height: 6px; background: rgba(155,155,155,0.15); margin-right: 0.75rem;">
-                                <div style="width: {{ workflow.recent_success_rate }}%; height: 100%; background: {% if workflow.recent_success_rate >= 90 %}var(--accent-green){% elif workflow.recent_success_rate >= 70 %}var(--accent-warning){% else %}var(--accent-error){% endif %};"></div>
+        <!-- Workflows Table -->
+        <div class="glass-container fade-in">
+            {% if workflows %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>NAME</th>
+                        <th>STATUS</th>
+                        <th>LAST EXECUTION</th>
+                        <th>SUCCESS RATE (30D)</th>
+                        <th>TOTAL RUNS (30D)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for workflow in workflows %}
+                    <tr>
+                        <td>
+                            <div class="font-semibold">{{ workflow.workflow_name }}</div>
+                            {% if workflow.description %}
+                            <div class="text-xs text-accent mt-1">{{ workflow.description|truncatewords:15 }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if workflow.status == 'active' %}
+                            <span class="status-badge status-active">ACTIVE</span>
+                            {% elif workflow.status == 'paused' %}
+                            <span class="status-badge status-paused">PAUSED</span>
+                            {% else %}
+                            <span class="status-badge status-error">ERROR</span>
+                            {% endif %}
+                        </td>
+                        <td class="font-secondary text-accent">
+                            {% if workflow.last_execution %}
+                            {{ workflow.last_execution|date:"Y-m-d H:i" }}
+                            {% else %}
+                            NEVER
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if workflow.recent_total > 0 %}
+                            <div class="flex items-center">
+                                <div class="w-24 bg-gray-800 h-2 mr-3 rounded-none">
+                                    <div class="{% if workflow.recent_success_rate >= 90 %}bg-green-500{% elif workflow.recent_success_rate >= 70 %}bg-yellow-500{% else %}bg-red-500{% endif %} h-2 rounded-none" style="width: {{ workflow.recent_success_rate }}%"></div>
+                                </div>
+                                <span class="font-secondary text-sm">{{ workflow.recent_success_rate|floatformat:1 }}%</span>
                             </div>
-                            <span class="mono">{{ workflow.recent_success_rate|floatformat:1 }}%</span>
-                        </div>
-                        {% else %}
-                        <span class="label">N/A</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <div class="mono">{{ workflow.recent_total }}</div>
-                        {% if workflow.recent_error > 0 %}
-                        <div class="label text-red mt-1">{{ workflow.recent_error }} ERRORS</div>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                            {% else %}
+                            <span class="font-secondary text-accent">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="font-secondary">{{ workflow.recent_total }}</div>
+                            {% if workflow.recent_error > 0 %}
+                            <div class="text-xs text-red-500 mt-1">{{ workflow.recent_error }} ERRORS</div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-center py-12">
+                <p class="font-secondary text-accent mb-4">NO WORKFLOWS CONFIGURED</p>
+                <p class="text-text-light text-sm">Contact support to set up your first automation workflow.</p>
+            </div>
+            {% endif %}
+        </div>
     </div>
-    {% else %}
-    <div class="text-center p-4">
-        <p class="label mb-3">NO WORKFLOWS CONFIGURED</p>
-        <p>Contact support to set up your first automation workflow.</p>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}

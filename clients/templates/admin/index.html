@@ -4,98 +4,156 @@
 {% block extrastyle %}
 {{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<style>
+    .stat-card {
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(155,155,155,0.2);
+        border-radius: 4px;
+        padding: 1.5rem;
+    }
+    .stat-label { font-family: 'Space Mono', monospace; font-size: 0.75rem; color: #9B9B9B; text-transform: uppercase; }
+    .stat-value { font-family: 'Space Grotesk', sans-serif; font-size: 2.5rem; font-weight: 700; color: #FFFFFF; }
+    .stat-change { font-family: 'Space Mono', monospace; font-size: 0.75rem; margin-top: 0.5rem; }
+    .positive { color: #22C55E; }
+    .negative { color: #EF4444; }
+    .chart-container { background: rgba(0,0,0,0.5); backdrop-filter: blur(10px); border: 1px solid rgba(155,155,155,0.2); border-radius: 4px; padding: 1.5rem; height: 350px; }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="admin-page">
-    <div class="page-header">
-        <span class="page-header__eyebrow">OPERATIONAL</span>
-        <h1 class="page-header__title">Operational Overview</h1>
+<div style="padding: 2rem;">
+    <!-- Header -->
+    <h1 style="font-family: 'Space Grotesk', sans-serif; font-size: 2rem; color: #FFFFFF; text-transform: uppercase; margin-bottom: 2rem;">OPERATIONAL OVERVIEW</h1>
+
+    <!-- Stats Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="stat-card">
+            <div class="stat-label">Total Clients</div>
+            <div class="stat-value">{{ total_clients|default:"0" }}</div>
+            <div class="stat-change positive">↑ {{ new_clients_this_month|default:"0" }} THIS MONTH</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Active Workflows</div>
+            <div class="stat-value">{{ active_workflows|default:"0" }}</div>
+            <div class="stat-change">{{ total_workflows|default:"0" }} TOTAL</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Monthly Revenue</div>
+            <div class="stat-value">${{ monthly_revenue|default:"0" }}</div>
+            <div class="stat-change positive">↑ ${{ revenue_growth|default:"0" }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">Executions Today</div>
+            <div class="stat-value">{{ executions_today|default:"0" }}</div>
+            <div class="stat-change">{{ success_rate|default:"0" }}% SUCCESS</div>
+        </div>
     </div>
 
-    <div class="grid-4 mb-5">
-        <div class="stat-card">
-            <div class="stat-card__label">Total Clients</div>
-            <div class="stat-card__value">{{ total_clients|default:"0" }}</div>
-            <div class="stat-card__delta stat-card__delta--up">↑ {{ new_clients_this_month|default:"0" }} THIS MONTH</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-card__label">Active Workflows</div>
-            <div class="stat-card__value">{{ active_workflows|default:"0" }}</div>
-            <div class="stat-card__delta">{{ total_workflows|default:"0" }} TOTAL</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-card__label">Monthly Revenue</div>
-            <div class="stat-card__value">${{ monthly_revenue|default:"0" }}</div>
-            <div class="stat-card__delta stat-card__delta--up">↑ ${{ revenue_growth|default:"0" }}</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-card__label">Executions Today</div>
-            <div class="stat-card__value">{{ executions_today|default:"0" }}</div>
-            <div class="stat-card__delta">{{ success_rate|default:"0" }}% SUCCESS</div>
-        </div>
-    </div>
-
-    <div class="grid-2 mb-5">
-        <div class="chart-card chart-card--md">
+    <!-- Charts -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="chart-container">
             <canvas id="clientGrowthChart"></canvas>
         </div>
-        <div class="chart-card chart-card--md">
+        <div class="chart-container">
             <canvas id="revenueChart"></canvas>
         </div>
     </div>
 
-    <div class="grid-2 mb-5">
-        <div class="chart-card chart-card--md">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="chart-container">
             <canvas id="workflowStatusChart"></canvas>
         </div>
-        <div class="chart-card chart-card--md">
+        <div class="chart-container">
             <canvas id="executionsChart"></canvas>
         </div>
     </div>
 
+    <!-- MCP Server Management Card -->
     {% if mcp_enabled %}
-    <div class="feature-card feature-card--green">
-        <div class="flex-between">
+    <div class="stat-card" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(30,31,43,0.5) 100%); border: 1px solid rgba(46,213,115,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h2 class="mb-3">MCP SERVER MANAGEMENT</h2>
-                <p class="mb-3">
+                <h2 style="font-family: 'Space Grotesk', sans-serif; color: #FFFFFF; margin-bottom: 1rem; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em;">
+                    MCP SERVER MANAGEMENT
+                </h2>
+                <p style="font-family: 'Inter', sans-serif; color: #DBDBDB; margin-bottom: 1rem; font-size: 0.95rem;">
                     Manage n8n workflows through the MCP server interface. Monitor status, execute workflows, and view real-time analytics.
                 </p>
-                <a href="{% url 'mcp_dashboard' %}" class="btn btn-ghost text-green" style="border-color: rgba(34,197,94,0.5);">
+                <a href="{% url 'mcp_dashboard' %}"
+                   style="
+                       display: inline-block;
+                       background: transparent;
+                       border: 1px solid rgba(46,213,115,0.5);
+                       color: #2ED573;
+                       padding: 10px 20px;
+                       font-family: 'Space Mono', monospace;
+                       font-size: 0.8rem;
+                       text-transform: uppercase;
+                       text-decoration: none;
+                       transition: all 0.3s;
+                       border-radius: 2px;
+                       letter-spacing: 0.05em;
+                   "
+                   onmouseover="this.style.borderColor='#2ED573'; this.style.background='rgba(46,213,115,0.1)';"
+                   onmouseout="this.style.borderColor='rgba(46,213,115,0.5)'; this.style.background='transparent';">
                     OPEN MCP DASHBOARD →
                 </a>
             </div>
-            <div class="text-center p-3">
-                <div class="text-green mono" style="font-size: 3rem;">⚡</div>
-                <div class="label mt-2">MCP SERVER</div>
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-family: 'Space Mono', monospace; font-size: 3rem; color: #2ED573;">⚡</div>
+                <div style="font-family: 'Space Mono', monospace; font-size: 0.7rem; color: #9B9B9B; margin-top: 0.5rem;">
+                    MCP SERVER
+                </div>
             </div>
         </div>
     </div>
     {% endif %}
 
-    <div class="feature-card feature-card--blue">
-        <div class="flex-between">
+    <!-- Execution Monitor Card -->
+    <div class="stat-card" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(30,31,43,0.5) 100%); border: 1px solid rgba(52,152,219,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h2 class="mb-3">EXECUTION MONITOR</h2>
-                <p class="mb-3">
+                <h2 style="font-family: 'Space Grotesk', sans-serif; color: #FFFFFF; margin-bottom: 1rem; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em;">
+                    EXECUTION MONITOR
+                </h2>
+                <p style="font-family: 'Inter', sans-serif; color: #DBDBDB; margin-bottom: 1rem; font-size: 0.95rem;">
                     Monitor and analyze n8n workflow executions in real-time. View success rates, track errors, and analyze execution trends.
                 </p>
-                <a href="{% url 'execution_dashboard' %}" class="btn btn-ghost text-blue" style="border-color: rgba(59,130,246,0.5);">
+                <a href="{% url 'execution_dashboard' %}"
+                   style="
+                       display: inline-block;
+                       background: transparent;
+                       border: 1px solid rgba(52,152,219,0.5);
+                       color: #3498DB;
+                       padding: 10px 20px;
+                       font-family: 'Space Mono', monospace;
+                       font-size: 0.8rem;
+                       text-transform: uppercase;
+                       text-decoration: none;
+                       transition: all 0.3s;
+                       border-radius: 2px;
+                       letter-spacing: 0.05em;
+                   "
+                   onmouseover="this.style.borderColor='#3498DB'; this.style.background='rgba(52,152,219,0.1)';"
+                   onmouseout="this.style.borderColor='rgba(52,152,219,0.5)'; this.style.background='transparent';">
                     OPEN EXECUTION MONITOR →
                 </a>
             </div>
-            <div class="text-center p-3">
-                <div class="text-blue mono" style="font-size: 3rem;">📊</div>
-                <div class="label mt-2">EXECUTIONS</div>
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-family: 'Space Mono', monospace; font-size: 3rem; color: #3498DB;">📊</div>
+                <div style="font-family: 'Space Mono', monospace; font-size: 0.7rem; color: #9B9B9B; margin-top: 0.5rem;">
+                    EXECUTIONS
+                </div>
             </div>
         </div>
     </div>
 
-    <h2 class="mt-6 mb-3">SYSTEM MODULES</h2>
+    <!-- Standard Admin Apps -->
+    <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; color: #FFFFFF; text-transform: uppercase; margin: 2rem 0 1rem;">SYSTEM MODULES</h2>
     {{ block.super }}
 </div>
 
