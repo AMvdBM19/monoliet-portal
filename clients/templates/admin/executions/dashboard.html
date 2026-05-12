@@ -6,451 +6,147 @@
 {% block extrastyle %}
 {{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
-<style>
-    /* Execution Dashboard Styles */
-    .exec-container {
-        max-width: 1600px;
-        margin: 0 auto;
-        padding: 2rem;
-    }
-
-    .exec-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2rem;
-    }
-
-    .exec-title {
-        font-family: 'Space Grotesk', sans-serif;
-        font-size: 2rem;
-        color: #FFFFFF;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-    }
-
-    .exec-subtitle {
-        font-family: 'Space Mono', monospace;
-        font-size: 0.75rem;
-        color: #9B9B9B;
-        margin-top: 0.5rem;
-    }
-
-    .exec-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-
-    .exec-card {
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(155, 155, 155, 0.2);
-        padding: 1.5rem;
-        border-radius: 4px;
-        transition: border-color 0.3s;
-    }
-
-    .exec-card:hover {
-        border-color: rgba(155, 155, 155, 0.4);
-    }
-
-    .exec-card-title {
-        font-family: 'Space Mono', monospace;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: #9B9B9B;
-        margin-bottom: 1rem;
-    }
-
-    .exec-stat {
-        font-family: 'Space Mono', monospace;
-        font-size: 2.5rem;
-        color: #FFFFFF;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-    }
-
-    .exec-label {
-        font-family: 'Inter', sans-serif;
-        font-size: 0.875rem;
-        color: #DBDBDB;
-    }
-
-    .exec-filters {
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(155, 155, 155, 0.2);
-        padding: 1.5rem;
-        border-radius: 4px;
-        margin-bottom: 2rem;
-        display: flex;
-        gap: 1rem;
-        align-items: flex-end;
-        flex-wrap: wrap;
-    }
-
-    .exec-filter-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .exec-filter-label {
-        font-family: 'Space Mono', monospace;
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #9B9B9B;
-    }
-
-    .exec-select {
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(155, 155, 155, 0.2);
-        color: #DBDBDB;
-        padding: 0.5rem 1rem;
-        font-family: 'Inter', sans-serif;
-        font-size: 0.875rem;
-        border-radius: 2px;
-        min-width: 200px;
-    }
-
-    .exec-select:focus {
-        border-color: #FFFFFF;
-        outline: none;
-    }
-
-    .exec-btn {
-        background: transparent;
-        border: 1px solid rgba(155, 155, 155, 0.3);
-        color: #9B9B9B;
-        padding: 0.5rem 1rem;
-        font-family: 'Space Mono', monospace;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        cursor: pointer;
-        transition: all 0.3s;
-        border-radius: 2px;
-        text-decoration: none;
-        display: inline-block;
-    }
-
-    .exec-btn:hover {
-        border-color: #FFFFFF;
-        color: #FFFFFF;
-    }
-
-    .exec-btn-primary {
-        background: #FFFFFF;
-        color: #0B0D10;
-        border-color: #FFFFFF;
-    }
-
-    .exec-btn-primary:hover {
-        background: #0B0D10;
-        color: #FFFFFF;
-    }
-
-    .exec-btn-sync {
-        background: rgba(46, 213, 115, 0.1);
-        border-color: #2ED573;
-        color: #2ED573;
-    }
-
-    .exec-btn-sync:hover {
-        background: #2ED573;
-        color: #0B0D10;
-    }
-
-    .exec-table-container {
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(155, 155, 155, 0.2);
-        border-radius: 4px;
-        overflow: hidden;
-    }
-
-    .exec-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .exec-table th {
-        font-family: 'Space Mono', monospace;
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: #9B9B9B;
-        padding: 1rem;
-        border-bottom: 1px solid rgba(155, 155, 155, 0.2);
-        text-align: left;
-        background: rgba(0, 0, 0, 0.3);
-    }
-
-    .exec-table td {
-        font-family: 'Inter', sans-serif;
-        color: #DBDBDB;
-        padding: 1rem;
-        border-bottom: 1px solid rgba(155, 155, 155, 0.1);
-    }
-
-    .exec-table tr:hover {
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    .workflow-name {
-        font-family: 'Space Grotesk', sans-serif;
-        color: #FFFFFF;
-        font-weight: 500;
-    }
-
-    .client-name {
-        color: #9B9B9B;
-        font-size: 0.85rem;
-    }
-
-    .exec-date {
-        font-family: 'Space Mono', monospace;
-        color: #9B9B9B;
-        font-size: 0.85rem;
-    }
-
-    .stat-success { color: #2ED573; }
-    .stat-error { color: #FF4757; }
-    .stat-total { color: #FFFFFF; font-weight: 600; }
-
-    .chart-container {
-        background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(155, 155, 155, 0.2);
-        border-radius: 4px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-        height: 300px;
-    }
-
-    .chart-title {
-        font-family: 'Space Mono', monospace;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: #9B9B9B;
-        margin-bottom: 1rem;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 3rem;
-        color: #9B9B9B;
-        font-family: 'Space Mono', monospace;
-    }
-
-    .refresh-indicator {
-        font-family: 'Space Mono', monospace;
-        font-size: 0.7rem;
-        color: #9B9B9B;
-        margin-left: auto;
-    }
-
-    .refresh-indicator.updating {
-        color: #2ED573;
-    }
-</style>
 {% endblock %}
 
 {% block content %}
-<div class="exec-container">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-        <h1 style="font-family: 'Space Grotesk', sans-serif; color: #FFFFFF; font-size: 2rem; letter-spacing: 0.1em; margin: 0;">
-            MCP COMMAND CENTER
-        </h1>
-        <div style="display: flex; gap: 1rem; align-items: center;">
-            <span class="refresh-indicator" id="refresh-indicator">Auto-refresh: 30s</span>
-            <a href="{% url 'sync_executions' %}" class="exec-btn exec-btn-sync">
+<div class="admin-page">
+    <div class="flex-between mb-5">
+        <h1>MCP COMMAND CENTER</h1>
+        <div class="flex gap-md" style="align-items: center;">
+            <span class="label" id="refresh-indicator">Auto-refresh: 30s</span>
+            <a href="{% url 'sync_executions' %}" class="btn btn-ghost text-green" style="border-color: rgba(34,197,94,0.5);">
                 ↻ SYNC NOW
             </a>
         </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div style="display: flex; gap: 0; margin-bottom: 2rem; border-bottom: 1px solid rgba(155, 155, 155, 0.2);">
-        <a href="{% url 'mcp_dashboard' %}"
-           style="
-               font-family: 'Space Mono', monospace;
-               font-size: 0.75rem;
-               text-transform: uppercase;
-               letter-spacing: 0.05em;
-               color: #9B9B9B;
-               padding: 0.75rem 1.5rem;
-               text-decoration: none;
-               border-bottom: 2px solid transparent;
-               transition: all 0.3s;
-               margin-bottom: -1px;
-           "
-           onmouseover="this.style.color='#FFFFFF'; this.style.borderBottomColor='rgba(255,255,255,0.5)';"
-           onmouseout="this.style.color='#9B9B9B'; this.style.borderBottomColor='transparent';">
-            OVERVIEW
-        </a>
-        <a href="{% url 'mcp_workflows' %}"
-           style="
-               font-family: 'Space Mono', monospace;
-               font-size: 0.75rem;
-               text-transform: uppercase;
-               letter-spacing: 0.05em;
-               color: #9B9B9B;
-               padding: 0.75rem 1.5rem;
-               text-decoration: none;
-               border-bottom: 2px solid transparent;
-               transition: all 0.3s;
-               margin-bottom: -1px;
-           "
-           onmouseover="this.style.color='#FFFFFF'; this.style.borderBottomColor='rgba(255,255,255,0.5)';"
-           onmouseout="this.style.color='#9B9B9B'; this.style.borderBottomColor='transparent';">
-            WORKFLOWS
-        </a>
-        <a href="{% url 'execution_dashboard' %}"
-           style="
-               font-family: 'Space Mono', monospace;
-               font-size: 0.75rem;
-               text-transform: uppercase;
-               letter-spacing: 0.05em;
-               color: #FFFFFF;
-               padding: 0.75rem 1.5rem;
-               text-decoration: none;
-               border-bottom: 2px solid #FFFFFF;
-               background: rgba(255, 255, 255, 0.05);
-               margin-bottom: -1px;
-           ">
-            EXECUTIONS
-        </a>
-    </div>
+    <nav class="admin-tabs">
+        <a href="{% url 'mcp_dashboard' %}" class="admin-tab">OVERVIEW</a>
+        <a href="{% url 'mcp_workflows' %}" class="admin-tab">WORKFLOWS</a>
+        <a href="{% url 'execution_dashboard' %}" class="admin-tab admin-tab--active">EXECUTIONS</a>
+    </nav>
 
-    <!-- Statistics Cards -->
-    <div class="exec-grid">
-        <div class="exec-card">
-            <div class="exec-card-title">Total Executions</div>
-            <div class="exec-stat" id="stat-total">{{ total_executions|default:"0" }}</div>
-            <div class="exec-label">Last {{ selected_days }} days</div>
+    <div class="grid-4 mb-5">
+        <div class="stat-card">
+            <div class="stat-card__label">Total Executions</div>
+            <div class="stat-card__value" id="stat-total">{{ total_executions|default:"0" }}</div>
+            <div class="stat-card__delta">Last {{ selected_days }} days</div>
         </div>
 
-        <div class="exec-card">
-            <div class="exec-card-title">Successful</div>
-            <div class="exec-stat stat-success" id="stat-success">{{ total_success|default:"0" }}</div>
-            <div class="exec-label">Completed without errors</div>
+        <div class="stat-card">
+            <div class="stat-card__label">Successful</div>
+            <div class="stat-card__value text-green" id="stat-success">{{ total_success|default:"0" }}</div>
+            <div class="stat-card__delta">Completed without errors</div>
         </div>
 
-        <div class="exec-card">
-            <div class="exec-card-title">Failed</div>
-            <div class="exec-stat stat-error" id="stat-errors">{{ total_errors|default:"0" }}</div>
-            <div class="exec-label">Errors detected</div>
+        <div class="stat-card">
+            <div class="stat-card__label">Failed</div>
+            <div class="stat-card__value text-red" id="stat-errors">{{ total_errors|default:"0" }}</div>
+            <div class="stat-card__delta">Errors detected</div>
         </div>
 
-        <div class="exec-card">
-            <div class="exec-card-title">Success Rate</div>
-            <div class="exec-stat" id="stat-rate">{{ success_rate|default:"0" }}%</div>
-            <div class="exec-label">Overall performance</div>
+        <div class="stat-card">
+            <div class="stat-card__label">Success Rate</div>
+            <div class="stat-card__value" id="stat-rate">{{ success_rate|default:"0" }}%</div>
+            <div class="stat-card__delta">Overall performance</div>
         </div>
     </div>
 
-    <!-- Chart -->
-    <div class="chart-container">
-        <div class="chart-title">Execution Trends</div>
+    <div class="chart-card chart-card--sm mb-5">
+        <div class="chart-card__title">Execution Trends</div>
         <canvas id="executionsChart"></canvas>
     </div>
 
-    <!-- Filters -->
-    <form method="get" class="exec-filters">
-        <div class="exec-filter-group">
-            <label class="exec-filter-label">Workflow</label>
-            <select name="workflow" class="exec-select">
-                <option value="">All Workflows</option>
-                {% for workflow in workflows %}
-                <option value="{{ workflow.n8n_workflow_id }}" {% if selected_workflow == workflow.n8n_workflow_id %}selected{% endif %}>
-                    {{ workflow.workflow_name }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
+    <form method="get" class="glass-card mb-5">
+        <div class="flex gap-md" style="align-items: flex-end; flex-wrap: wrap;">
+            <div class="form-group" style="margin-bottom: 0; min-width: 200px;">
+                <label class="form-label">Workflow</label>
+                <select name="workflow" class="form-select">
+                    <option value="">All Workflows</option>
+                    {% for workflow in workflows %}
+                    <option value="{{ workflow.n8n_workflow_id }}" {% if selected_workflow == workflow.n8n_workflow_id %}selected{% endif %}>
+                        {{ workflow.workflow_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <div class="exec-filter-group">
-            <label class="exec-filter-label">Client</label>
-            <select name="client" class="exec-select">
-                <option value="">All Clients</option>
-                {% for client in clients %}
-                <option value="{{ client.id }}" {% if selected_client == client.id|stringformat:"s" %}selected{% endif %}>
-                    {{ client.company_name }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
+            <div class="form-group" style="margin-bottom: 0; min-width: 200px;">
+                <label class="form-label">Client</label>
+                <select name="client" class="form-select">
+                    <option value="">All Clients</option>
+                    {% for client in clients %}
+                    <option value="{{ client.id }}" {% if selected_client == client.id|stringformat:"s" %}selected{% endif %}>
+                        {{ client.company_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <div class="exec-filter-group">
-            <label class="exec-filter-label">Time Range</label>
-            <select name="days" class="exec-select">
-                <option value="1" {% if selected_days == 1 %}selected{% endif %}>Last 24 Hours</option>
-                <option value="7" {% if selected_days == 7 %}selected{% endif %}>Last 7 Days</option>
-                <option value="30" {% if selected_days == 30 %}selected{% endif %}>Last 30 Days</option>
-                <option value="90" {% if selected_days == 90 %}selected{% endif %}>Last 90 Days</option>
-            </select>
-        </div>
+            <div class="form-group" style="margin-bottom: 0; min-width: 180px;">
+                <label class="form-label">Time Range</label>
+                <select name="days" class="form-select">
+                    <option value="1" {% if selected_days == 1 %}selected{% endif %}>Last 24 Hours</option>
+                    <option value="7" {% if selected_days == 7 %}selected{% endif %}>Last 7 Days</option>
+                    <option value="30" {% if selected_days == 30 %}selected{% endif %}>Last 30 Days</option>
+                    <option value="90" {% if selected_days == 90 %}selected{% endif %}>Last 90 Days</option>
+                </select>
+            </div>
 
-        <button type="submit" class="exec-btn">FILTER</button>
-        <a href="{% url 'execution_dashboard' %}" class="exec-btn">RESET</a>
+            <button type="submit" class="btn btn-ghost btn-sm">FILTER</button>
+            <a href="{% url 'execution_dashboard' %}" class="btn btn-ghost btn-sm">RESET</a>
+        </div>
     </form>
 
-    <!-- Executions Table -->
-    <div class="exec-table-container">
-        <table class="exec-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Workflow</th>
-                    <th>Client</th>
-                    <th>Total</th>
-                    <th>Success</th>
-                    <th>Errors</th>
-                    <th>Rate</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for execution in executions %}
-                <tr>
-                    <td class="exec-date">{{ execution.execution_date|date:"Y-m-d" }}</td>
-                    <td class="workflow-name">{{ execution.workflow.workflow_name }}</td>
-                    <td class="client-name">{{ execution.client.company_name }}</td>
-                    <td class="stat-total">{{ execution.total_count }}</td>
-                    <td class="stat-success">{{ execution.success_count }}</td>
-                    <td class="stat-error">{{ execution.error_count }}</td>
-                    <td>
-                        {% if execution.total_count > 0 %}
-                            {% widthratio execution.success_count execution.total_count 100 %}%
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{% url 'execution_detail' execution.id %}" class="exec-btn" style="font-size: 0.65rem; padding: 0.25rem 0.75rem;">
-                            VIEW
-                        </a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="8" class="empty-state">
-                        No executions found for the selected filters
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="glass-card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Workflow</th>
+                        <th>Client</th>
+                        <th>Total</th>
+                        <th>Success</th>
+                        <th>Errors</th>
+                        <th>Rate</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for execution in executions %}
+                    <tr>
+                        <td class="mono text-muted">{{ execution.execution_date|date:"Y-m-d" }}</td>
+                        <td class="text-primary">{{ execution.workflow.workflow_name }}</td>
+                        <td class="text-muted">{{ execution.client.company_name }}</td>
+                        <td class="text-primary">{{ execution.total_count }}</td>
+                        <td class="text-green">{{ execution.success_count }}</td>
+                        <td class="text-red">{{ execution.error_count }}</td>
+                        <td>
+                            {% if execution.total_count > 0 %}
+                                {% widthratio execution.success_count execution.total_count 100 %}%
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'execution_detail' execution.id %}" class="btn btn-ghost btn-sm">VIEW</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center p-3 label">
+                            No executions found for the selected filters
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    // Chart configuration
     const chartConfig = {
         responsive: true,
         maintainAspectRatio: false,
@@ -476,7 +172,6 @@
 
     let executionsChart;
 
-    // Initialize chart
     async function initChart() {
         const ctx = document.getElementById('executionsChart').getContext('2d');
 
@@ -493,16 +188,16 @@
                         {
                             label: 'SUCCESS',
                             data: data.success,
-                            borderColor: '#2ED573',
-                            backgroundColor: 'rgba(46, 213, 115, 0.1)',
+                            borderColor: '#22C55E',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
                             fill: true,
                             tension: 0.4
                         },
                         {
                             label: 'ERRORS',
                             data: data.errors,
-                            borderColor: '#FF4757',
-                            backgroundColor: 'rgba(255, 71, 87, 0.1)',
+                            borderColor: '#EF4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
                             fill: true,
                             tension: 0.4
                         }
@@ -515,11 +210,10 @@
         }
     }
 
-    // Auto-refresh stats every 30 seconds
     async function refreshStats() {
         const indicator = document.getElementById('refresh-indicator');
         indicator.textContent = 'Updating...';
-        indicator.classList.add('updating');
+        indicator.style.color = 'var(--accent-green)';
 
         try {
             const params = new URLSearchParams(window.location.search);
@@ -538,12 +232,11 @@
         }
 
         setTimeout(() => {
-            indicator.classList.remove('updating');
+            indicator.style.color = '';
             indicator.textContent = 'Auto-refresh: 30s';
         }, 2000);
     }
 
-    // Initialize
     document.addEventListener('DOMContentLoaded', function() {
         initChart();
         setInterval(refreshStats, 30000);

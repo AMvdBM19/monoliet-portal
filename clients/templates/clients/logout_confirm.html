@@ -1,17 +1,18 @@
 {% extends "clients/base.html" %}
 
 {% block title %}Logout - Monoliet Portal{% endblock %}
+{% block page_title %}Logout{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center px-4">
-    <div class="glass-container max-w-md w-full p-8 text-center">
-        <h2 class="font-primary text-2xl font-bold text-white mb-4">CONFIRM LOGOUT</h2>
-        <p class="font-secondary text-accent text-sm mb-8">Are you sure you want to terminate your session?</p>
+<div class="flex-center" style="min-height: 60vh;">
+    <div class="glass-card glass-card--flat text-center" style="max-width: 28rem; width: 100%;">
+        <h2 class="mb-3">CONFIRM LOGOUT</h2>
+        <p class="label mb-5">Are you sure you want to terminate your session?</p>
 
-        <form method="post" action="{% url 'portal:logout' %}" class="space-y-4">
+        <form method="post" action="{% url 'portal:logout' %}">
             {% csrf_token %}
-            <button type="submit" class="btn-primary w-full">YES, LOGOUT</button>
-            <a href="{% url 'portal:dashboard' %}" class="btn-secondary w-full block text-center py-3">CANCEL</a>
+            <button type="submit" class="btn btn-primary w-full mb-3">YES, LOGOUT</button>
+            <a href="{% url 'portal:dashboard' %}" class="btn btn-ghost w-full">CANCEL</a>
         </form>
     </div>
 </div>

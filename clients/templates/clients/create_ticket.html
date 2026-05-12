@@ -1,58 +1,52 @@
 {% extends "clients/base.html" %}
 
 {% block title %}Create Support Ticket - Monoliet Portal{% endblock %}
+{% block page_title %}New Support Ticket{% endblock %}
 
 {% block content %}
-<div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-3xl mx-auto">
-        <!-- Header -->
-        <div class="mb-8 fade-in">
-            <h1 class="font-primary text-4xl font-bold text-white mb-2">NEW SUPPORT TICKET</h1>
-            <p class="font-secondary text-accent text-sm uppercase tracking-wider">Request Assistance</p>
-        </div>
+<div style="max-width: 720px;">
+    <div class="page-header">
+        <span class="page-header__eyebrow">NEW REQUEST</span>
+        <h1 class="page-header__title">New Support Ticket</h1>
+        <p class="page-header__sub">Request assistance from the Monoliet team.</p>
+    </div>
 
-        <!-- Form -->
-        <div class="glass-container fade-in">
-            <form method="post">
-                {% csrf_token %}
+    <div class="glass-card glass-card--flat">
+        <form method="post">
+            {% csrf_token %}
 
-                <!-- Subject -->
-                <div class="mb-6">
-                    <label for="{{ form.subject.id_for_label }}" class="form-label">Subject</label>
-                    {{ form.subject }}
-                    {% if form.subject.errors %}
-                    <p class="mt-2 text-sm text-red-500">{{ form.subject.errors.0 }}</p>
-                    {% endif %}
-                </div>
+            <div class="form-group">
+                <label for="{{ form.subject.id_for_label }}" class="form-label">Subject</label>
+                {{ form.subject }}
+                {% if form.subject.errors %}
+                <p class="form-error">{{ form.subject.errors.0 }}</p>
+                {% endif %}
+            </div>
 
-                <!-- Description -->
-                <div class="mb-6">
-                    <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
-                    {{ form.description }}
-                    {% if form.description.errors %}
-                    <p class="mt-2 text-sm text-red-500">{{ form.description.errors.0 }}</p>
-                    {% endif %}
-                </div>
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <p class="form-error">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
 
-                <!-- Priority -->
-                <div class="mb-6">
-                    <label for="{{ form.priority.id_for_label }}" class="form-label">Priority Level</label>
-                    {{ form.priority }}
-                    {% if form.priority.help_text %}
-                    <p class="mt-1 text-xs text-accent">{{ form.priority.help_text }}</p>
-                    {% endif %}
-                    {% if form.priority.errors %}
-                    <p class="mt-2 text-sm text-red-500">{{ form.priority.errors.0 }}</p>
-                    {% endif %}
-                </div>
+            <div class="form-group">
+                <label for="{{ form.priority.id_for_label }}" class="form-label">Priority Level</label>
+                {{ form.priority }}
+                {% if form.priority.help_text %}
+                <p class="form-help">{{ form.priority.help_text }}</p>
+                {% endif %}
+                {% if form.priority.errors %}
+                <p class="form-error">{{ form.priority.errors.0 }}</p>
+                {% endif %}
+            </div>
 
-                <!-- Buttons -->
-                <div class="flex space-x-4">
-                    <button type="submit" class="btn-primary">SUBMIT TICKET</button>
-                    <a href="{% url 'portal:support' %}" class="btn-secondary">CANCEL</a>
-                </div>
-            </form>
-        </div>
+            <div class="flex gap-md mt-5">
+                <button type="submit" class="btn btn-primary">SUBMIT TICKET</button>
+                <a href="{% url 'portal:support' %}" class="btn btn-ghost">CANCEL</a>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

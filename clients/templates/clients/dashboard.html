@@ -2,172 +2,154 @@
 {% load static %}
 
 {% block title %}Dashboard - Monoliet Portal{% endblock %}
+{% block page_title %}Mission Control{% endblock %}
 
 {% block content %}
-<div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
-        <!-- Page Header -->
-        <div class="mb-12 fade-in">
-            <h1 class="font-primary text-4xl font-bold text-white mb-2">MISSION CONTROL</h1>
-            <p class="font-secondary text-accent text-sm uppercase tracking-wider">System Status Overview</p>
-        </div>
+<div class="page-header">
+    <span class="page-header__eyebrow">SYSTEM STATUS</span>
+    <h1 class="page-header__title">Mission Control</h1>
+    <p class="page-header__sub">Real-time overview of workflows, executions, billing, and support.</p>
+</div>
 
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12 fade-in">
-            <!-- Active Workflows -->
-            <div class="stat-card">
-                <div class="stat-label">Active Workflows</div>
-                <div class="stat-value">{{ active_workflows|default:"0" }} / {{ total_workflows|default:"0" }}</div>
-                <div class="mt-2">
-                    <span class="status-badge status-active">OPERATIONAL</span>
-                </div>
-            </div>
-
-            <!-- Success Rate -->
-            <div class="stat-card">
-                <div class="stat-label">Success Rate</div>
-                <div class="stat-value">{{ success_rate|default:"0" }}%</div>
-                <div class="mt-2 font-secondary text-xs text-accent">
-                    LAST 30 DAYS
-                </div>
-            </div>
-
-            <!-- Total Executions -->
-            <div class="stat-card">
-                <div class="stat-label">Total Executions</div>
-                <div class="stat-value">{{ total_executions|default:"0" }}</div>
-                <div class="mt-2 font-secondary text-xs text-accent">
-                    ALL TIME
-                </div>
-            </div>
-
-            <!-- Support Status -->
-            <div class="stat-card">
-                <div class="stat-label">Support Tickets</div>
-                <div class="stat-value">{{ open_tickets|default:"0" }}</div>
-                <div class="mt-2">
-                    {% if open_tickets > 0 %}
-                    <span class="status-badge status-pending">ATTENTION REQUIRED</span>
-                    {% else %}
-                    <span class="status-badge status-active">ALL CLEAR</span>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="glass-container fade-in mb-12">
-            <h2 class="font-primary text-2xl font-semibold text-white mb-6">RECENT EXECUTIONS</h2>
-
-            {% if recent_executions %}
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>WORKFLOW</th>
-                        <th>TIMESTAMP</th>
-                        <th>STATUS</th>
-                        <th>RESULTS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for execution in recent_executions %}
-                    <tr>
-                        <td class="font-semibold">{{ execution.workflow.workflow_name }}</td>
-                        <td class="font-secondary text-accent">{{ execution.execution_date|date:"Y-m-d H:i" }}</td>
-                        <td>
-                            {% if execution.error_count == 0 %}
-                            <span class="status-badge status-active">SUCCESS</span>
-                            {% else %}
-                            <span class="status-badge status-error">ERRORS DETECTED</span>
-                            {% endif %}
-                        </td>
-                        <td class="font-secondary">{{ execution.success_count }}/{{ execution.total_count }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="text-center py-12">
-                <p class="font-secondary text-accent">NO RECENT ACTIVITY</p>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Two Column Layout for Invoices and Tickets -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
-            <!-- Pending Invoices -->
-            <div class="glass-container">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="font-primary text-xl font-semibold text-white">PENDING INVOICES</h2>
-                    <a href="{% url 'portal:invoices' %}" class="font-secondary text-accent hover:text-white text-xs uppercase">View All →</a>
-                </div>
-
-                {% if pending_invoices %}
-                <div class="space-y-4">
-                    {% for invoice in pending_invoices %}
-                    <div class="flex items-center justify-between py-3 border-b border-gray-800">
-                        <div class="flex-1">
-                            <p class="font-secondary text-sm text-white">{{ invoice.invoice_number }}</p>
-                            <p class="text-xs text-accent mt-1">Due: {{ invoice.due_date|date:"Y-m-d" }}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-secondary text-sm font-semibold text-white">${{ invoice.amount }}</p>
-                            <span class="status-badge status-{{ invoice.status }} mt-1 inline-block">{{ invoice.get_status_display|upper }}</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="text-center py-8">
-                    <p class="font-secondary text-accent text-sm">NO PENDING INVOICES</p>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Open Support Tickets -->
-            <div class="glass-container">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="font-primary text-xl font-semibold text-white">OPEN TICKETS</h2>
-                    <a href="{% url 'portal:create-ticket' %}" class="btn-secondary text-xs px-3 py-2">NEW TICKET</a>
-                </div>
-
-                {% if open_tickets %}
-                <div class="space-y-4">
-                    {% for ticket in open_tickets %}
-                    <div class="py-3 border-b border-gray-800">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-white">{{ ticket.subject }}</p>
-                                <p class="text-xs text-accent mt-1">{{ ticket.created_at|date:"M d, Y" }}</p>
-                            </div>
-                            <div class="ml-4">
-                                <span class="status-badge
-                                    {% if ticket.priority == 'high' %}status-error
-                                    {% elif ticket.priority == 'medium' %}status-paused
-                                    {% else %}status-pending{% endif %}">
-                                    {{ ticket.priority|upper }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                <div class="mt-4">
-                    <a href="{% url 'portal:support' %}" class="font-secondary text-accent hover:text-white text-xs uppercase">View All →</a>
-                </div>
-                {% else %}
-                <div class="text-center py-8">
-                    <p class="font-secondary text-accent text-sm mb-4">NO OPEN SUPPORT TICKETS</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="mt-12 flex justify-center space-x-4 fade-in">
-            <a href="{% url 'portal:workflows' %}" class="btn-primary">VIEW WORKFLOWS</a>
-            <a href="{% url 'portal:support' %}" class="btn-secondary">OPEN SUPPORT TICKET</a>
+<div class="grid-4 mb-5">
+    <div class="stat-card">
+        <div class="stat-card__label">Active Workflows</div>
+        <div class="stat-card__value">{{ active_workflows|default:"0" }} / {{ total_workflows|default:"0" }}</div>
+        <div class="mt-2">
+            <span class="badge badge--green">OPERATIONAL</span>
         </div>
     </div>
+
+    <div class="stat-card">
+        <div class="stat-card__label">Success Rate</div>
+        <div class="stat-card__value">{{ success_rate|default:"0" }}%</div>
+        <div class="stat-card__delta">LAST 30 DAYS</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card__label">Total Executions</div>
+        <div class="stat-card__value">{{ total_executions|default:"0" }}</div>
+        <div class="stat-card__delta">ALL TIME</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-card__label">Support Tickets</div>
+        <div class="stat-card__value">{{ open_tickets|default:"0" }}</div>
+        <div class="mt-2">
+            {% if open_tickets > 0 %}
+            <span class="badge badge--yellow">ATTENTION REQUIRED</span>
+            {% else %}
+            <span class="badge badge--green">ALL CLEAR</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="glass-card glass-card--flat mb-5">
+    <h2 class="mb-4">RECENT EXECUTIONS</h2>
+
+    {% if recent_executions %}
+    <div class="overflow-x-auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>WORKFLOW</th>
+                    <th>TIMESTAMP</th>
+                    <th>STATUS</th>
+                    <th>RESULTS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for execution in recent_executions %}
+                <tr>
+                    <td>{{ execution.workflow.workflow_name }}</td>
+                    <td class="mono text-muted">{{ execution.execution_date|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        {% if execution.error_count == 0 %}
+                        <span class="badge badge--green">SUCCESS</span>
+                        {% else %}
+                        <span class="badge badge--red">ERRORS DETECTED</span>
+                        {% endif %}
+                    </td>
+                    <td class="mono">{{ execution.success_count }}/{{ execution.total_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center p-4">
+        <p class="label">NO RECENT ACTIVITY</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="grid-2 mb-5">
+    <div class="glass-card glass-card--flat">
+        <div class="flex-between mb-4">
+            <h2>PENDING INVOICES</h2>
+            <a href="{% url 'portal:invoices' %}" class="label">View All →</a>
+        </div>
+
+        {% if pending_invoices %}
+        <div>
+            {% for invoice in pending_invoices %}
+            <div class="flex-between" style="padding: 0.75rem 0; border-bottom: 1px solid var(--border);">
+                <div>
+                    <p class="mono text-primary">{{ invoice.invoice_number }}</p>
+                    <p class="label mt-1">Due: {{ invoice.due_date|date:"Y-m-d" }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="mono text-primary">${{ invoice.amount }}</p>
+                    <span class="badge badge--{% if invoice.status == 'paid' %}green{% elif invoice.status == 'overdue' %}red{% else %}yellow{% endif %} mt-1">{{ invoice.get_status_display|upper }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center p-3">
+            <p class="label">NO PENDING INVOICES</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="glass-card glass-card--flat">
+        <div class="flex-between mb-4">
+            <h2>OPEN TICKETS</h2>
+            <a href="{% url 'portal:create-ticket' %}" class="btn btn-ghost btn-sm">NEW TICKET</a>
+        </div>
+
+        {% if open_tickets %}
+        <div>
+            {% for ticket in open_tickets %}
+            <div style="padding: 0.75rem 0; border-bottom: 1px solid var(--border);">
+                <div class="flex-between">
+                    <div>
+                        <p class="text-primary">{{ ticket.subject }}</p>
+                        <p class="label mt-1">{{ ticket.created_at|date:"M d, Y" }}</p>
+                    </div>
+                    <div>
+                        <span class="badge badge--{% if ticket.priority == 'high' %}red{% elif ticket.priority == 'medium' %}yellow{% else %}gray{% endif %}">
+                            {{ ticket.priority|upper }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mt-3">
+            <a href="{% url 'portal:support' %}" class="label">View All →</a>
+        </div>
+        {% else %}
+        <div class="text-center p-3">
+            <p class="label">NO OPEN SUPPORT TICKETS</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="flex-center gap-md mt-6">
+    <a href="{% url 'portal:workflows' %}" class="btn btn-primary">VIEW WORKFLOWS</a>
+    <a href="{% url 'portal:support' %}" class="btn btn-ghost">OPEN SUPPORT TICKET</a>
 </div>
 {% endblock %}
