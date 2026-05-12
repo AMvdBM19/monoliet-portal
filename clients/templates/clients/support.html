@@ -1,84 +1,81 @@
 {% extends "clients/base.html" %}
 
 {% block title %}Support - Monoliet Portal{% endblock %}
+{% block page_title %}Support{% endblock %}
 
 {% block content %}
-<div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="mb-8 flex justify-between items-center fade-in">
-            <div>
-                <h1 class="font-primary text-4xl font-bold text-white mb-2">SUPPORT</h1>
-                <p class="font-secondary text-accent text-sm uppercase tracking-wider">Tickets & Assistance</p>
-            </div>
-            <a href="{% url 'portal:create-ticket' %}" class="btn-primary">NEW TICKET</a>
-        </div>
-
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 fade-in">
-            <div class="stat-card">
-                <div class="stat-label">Open</div>
-                <div class="stat-value" style="color: #EF4444;">{{ open_count|default:"0" }}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">In Progress</div>
-                <div class="stat-value" style="color: #FBBF24;">{{ in_progress_count|default:"0" }}</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Resolved</div>
-                <div class="stat-value" style="color: #22C55E;">{{ resolved_count|default:"0" }}</div>
-            </div>
-        </div>
-
-        <!-- Tickets Table -->
-        <div class="glass-container fade-in">
-            {% if tickets %}
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>SUBJECT</th>
-                        <th>PRIORITY</th>
-                        <th>STATUS</th>
-                        <th>CREATED</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ticket in tickets %}
-                    <tr>
-                        <td>
-                            <div class="font-semibold">{{ ticket.subject }}</div>
-                            <div class="text-xs text-accent mt-1">{{ ticket.description|truncatewords:20 }}</div>
-                        </td>
-                        <td>
-                            {% if ticket.priority == 'high' %}
-                            <span class="status-badge status-error">HIGH</span>
-                            {% elif ticket.priority == 'medium' %}
-                            <span class="status-badge status-paused">MEDIUM</span>
-                            {% else %}
-                            <span class="status-badge status-pending">LOW</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if ticket.status == 'resolved' %}
-                            <span class="status-badge status-active">RESOLVED</span>
-                            {% elif ticket.status == 'in_progress' %}
-                            <span class="status-badge status-paused">IN PROGRESS</span>
-                            {% else %}
-                            <span class="status-badge status-pending">OPEN</span>
-                            {% endif %}
-                        </td>
-                        <td class="font-secondary text-accent">{{ ticket.created_at|date:"Y-m-d" }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="text-center py-12">
-                <p class="font-secondary text-accent mb-4">NO SUPPORT TICKETS</p>
-                <a href="{% url 'portal:create-ticket' %}" class="btn-secondary">CREATE FIRST TICKET</a>
-            </div>
-            {% endif %}
-        </div>
+<div class="flex-between mb-5">
+    <div class="page-header" style="margin-bottom: 0;">
+        <span class="page-header__eyebrow">ASSISTANCE</span>
+        <h1 class="page-header__title">Support</h1>
+        <p class="page-header__sub">Tickets and assistance requests.</p>
     </div>
+    <a href="{% url 'portal:create-ticket' %}" class="btn btn-primary">NEW TICKET</a>
+</div>
+
+<div class="grid-3 mb-5">
+    <div class="stat-card">
+        <div class="stat-card__label">Open</div>
+        <div class="stat-card__value text-red">{{ open_count|default:"0" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card__label">In Progress</div>
+        <div class="stat-card__value text-yellow">{{ in_progress_count|default:"0" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card__label">Resolved</div>
+        <div class="stat-card__value text-green">{{ resolved_count|default:"0" }}</div>
+    </div>
+</div>
+
+<div class="glass-card glass-card--flat">
+    {% if tickets %}
+    <div class="overflow-x-auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>SUBJECT</th>
+                    <th>PRIORITY</th>
+                    <th>STATUS</th>
+                    <th>CREATED</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td>
+                        <div class="text-primary">{{ ticket.subject }}</div>
+                        <div class="label mt-1">{{ ticket.description|truncatewords:20 }}</div>
+                    </td>
+                    <td>
+                        {% if ticket.priority == 'high' %}
+                        <span class="badge badge--red">HIGH</span>
+                        {% elif ticket.priority == 'medium' %}
+                        <span class="badge badge--yellow">MEDIUM</span>
+                        {% else %}
+                        <span class="badge badge--gray">LOW</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if ticket.status == 'resolved' %}
+                        <span class="badge badge--green">RESOLVED</span>
+                        {% elif ticket.status == 'in_progress' %}
+                        <span class="badge badge--yellow">IN PROGRESS</span>
+                        {% else %}
+                        <span class="badge badge--gray">OPEN</span>
+                        {% endif %}
+                    </td>
+                    <td class="mono text-muted">{{ ticket.created_at|date:"Y-m-d" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center p-4">
+        <p class="label mb-3">NO SUPPORT TICKETS</p>
+        <a href="{% url 'portal:create-ticket' %}" class="btn btn-ghost">CREATE FIRST TICKET</a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
