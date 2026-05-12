@@ -1,80 +1,83 @@
 {% extends "clients/base.html" %}
 
 {% block title %}Invoices - Monoliet Portal{% endblock %}
-{% block page_title %}Invoices{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <span class="page-header__eyebrow">BILLING</span>
-    <h1 class="page-header__title">Invoices</h1>
-    <p class="page-header__sub">Billing and payment records.</p>
-</div>
+<div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8 fade-in">
+            <h1 class="font-primary text-4xl font-bold text-white mb-2">INVOICES</h1>
+            <p class="font-secondary text-accent text-sm uppercase tracking-wider">Billing & Payment Records</p>
+        </div>
 
-<div class="grid-4 mb-5">
-    <div class="stat-card">
-        <div class="stat-card__label">Total Invoiced</div>
-        <div class="stat-card__value">${{ total_amount|floatformat:2|default:"0.00" }}</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card__label">Paid</div>
-        <div class="stat-card__value text-green">${{ paid_amount|floatformat:2|default:"0.00" }}</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card__label">Pending</div>
-        <div class="stat-card__value text-yellow">${{ pending_amount|floatformat:2|default:"0.00" }}</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-card__label">Overdue</div>
-        <div class="stat-card__value text-red">${{ overdue_amount|floatformat:2|default:"0.00" }}</div>
-    </div>
-</div>
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12 fade-in">
+            <div class="stat-card">
+                <div class="stat-label">Total Invoiced</div>
+                <div class="stat-value">${{ total_amount|floatformat:2|default:"0.00" }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Paid</div>
+                <div class="stat-value" style="color: #22C55E;">${{ paid_amount|floatformat:2|default:"0.00" }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pending</div>
+                <div class="stat-value" style="color: #FBBF24;">${{ pending_amount|floatformat:2|default:"0.00" }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Overdue</div>
+                <div class="stat-value" style="color: #EF4444;">${{ overdue_amount|floatformat:2|default:"0.00" }}</div>
+            </div>
+        </div>
 
-<div class="glass-card glass-card--flat">
-    {% if invoices %}
-    <div class="overflow-x-auto">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>INVOICE #</th>
-                    <th>TYPE</th>
-                    <th>AMOUNT</th>
-                    <th>DUE DATE</th>
-                    <th>STATUS</th>
-                    <th>PAID DATE</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for invoice in invoices %}
-                <tr>
-                    <td class="mono text-primary">{{ invoice.invoice_number }}</td>
-                    <td>{{ invoice.get_type_display|upper }}</td>
-                    <td class="mono text-primary">${{ invoice.amount|floatformat:2 }}</td>
-                    <td class="mono text-muted">{{ invoice.due_date|date:"Y-m-d" }}</td>
-                    <td>
-                        {% if invoice.is_overdue %}
-                        <span class="badge badge--red">OVERDUE</span>
-                        {% elif invoice.status == 'paid' %}
-                        <span class="badge badge--green">PAID</span>
-                        {% else %}
-                        <span class="badge badge--yellow">PENDING</span>
-                        {% endif %}
-                    </td>
-                    <td class="mono text-muted">
-                        {% if invoice.paid_date %}
-                        {{ invoice.paid_date|date:"Y-m-d" }}
-                        {% else %}
-                        -
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <!-- Invoices Table -->
+        <div class="glass-container fade-in">
+            {% if invoices %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>INVOICE #</th>
+                        <th>TYPE</th>
+                        <th>AMOUNT</th>
+                        <th>DUE DATE</th>
+                        <th>STATUS</th>
+                        <th>PAID DATE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in invoices %}
+                    <tr {% if invoice.is_overdue %}style="background: rgba(239, 68, 68, 0.05);"{% endif %}>
+                        <td class="font-secondary font-bold">{{ invoice.invoice_number }}</td>
+                        <td class="uppercase">{{ invoice.get_type_display }}</td>
+                        <td class="font-secondary text-white font-semibold">${{ invoice.amount|floatformat:2 }}</td>
+                        <td class="font-secondary text-accent">{{ invoice.due_date|date:"Y-m-d" }}</td>
+                        <td>
+                            {% if invoice.is_overdue %}
+                            <span class="status-badge status-error">OVERDUE</span>
+                            {% elif invoice.status == 'paid' %}
+                            <span class="status-badge status-active">PAID</span>
+                            {% else %}
+                            <span class="status-badge status-pending">PENDING</span>
+                            {% endif %}
+                        </td>
+                        <td class="font-secondary text-accent">
+                            {% if invoice.paid_date %}
+                            {{ invoice.paid_date|date:"Y-m-d" }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-center py-12">
+                <p class="font-secondary text-accent">NO INVOICES FOUND</p>
+            </div>
+            {% endif %}
+        </div>
     </div>
-    {% else %}
-    <div class="text-center p-4">
-        <p class="label">NO INVOICES FOUND</p>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}

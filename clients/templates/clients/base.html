@@ -6,79 +6,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Monoliet Client Portal{% endblock %}</title>
 
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'bg-primary': '#0B0D10',
+                        'text-light': '#DBDBDB',
+                        'text-dark': '#1E1F2B',
+                        'accent': '#9B9B9B',
+                    },
+                    fontFamily: {
+                        'primary': ['Space Grotesk', 'sans-serif'],
+                        'secondary': ['Space Mono', 'monospace'],
+                        'text': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    {% block extra_css %}{% endblock %}
 </head>
-<body>
-    {% if user.is_authenticated %}
-    <aside class="portal-sidebar" id="portal-sidebar">
-        <div class="portal-sidebar__logo">
-            <a href="{% url 'portal:dashboard' %}">MONOLIET</a>
-        </div>
-        <nav class="portal-sidebar__nav">
-            <a href="{% url 'portal:dashboard' %}"
-               class="portal-sidebar__link{% if request.path == '/' %} portal-sidebar__link--active{% endif %}">
-                Dashboard
-            </a>
-            <a href="{% url 'portal:workflows' %}"
-               class="portal-sidebar__link{% if '/workflows' in request.path %} portal-sidebar__link--active{% endif %}">
-                Workflows
-            </a>
-            <a href="{% url 'portal:executions' %}"
-               class="portal-sidebar__link{% if '/executions' in request.path %} portal-sidebar__link--active{% endif %}">
-                Executions
-            </a>
-            <a href="{% url 'portal:invoices' %}"
-               class="portal-sidebar__link{% if '/invoices' in request.path %} portal-sidebar__link--active{% endif %}">
-                Invoices
-            </a>
-            <a href="{% url 'portal:support' %}"
-               class="portal-sidebar__link{% if '/support' in request.path %} portal-sidebar__link--active{% endif %}">
-                Support
-            </a>
-        </nav>
-    </aside>
+<body class="font-text" style="background: #0B0D10; color: #DBDBDB;">
+    <!-- Navigation -->
+    <nav style="backdrop-filter: blur(10px); background-color: rgba(0, 0, 0, 0.5); border-bottom: 1px solid rgba(155, 155, 155, 0.2);" class="fixed top-0 w-full z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <span class="font-primary text-white text-xl font-semibold tracking-wider">MONOLIET</span>
+                </div>
 
-    <main class="portal-main">
-        <header class="portal-header">
-            <div class="portal-header__title">{% block page_title %}{% endblock %}</div>
-            <div class="portal-header__user">
-                <span>{{ user.username }}</span>
-                <form method="post" action="{% url 'portal:logout' %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-ghost btn-sm">Logout</button>
-                </form>
-            </div>
-        </header>
+                <!-- Navigation Links (if authenticated) -->
+                {% if user.is_authenticated %}
+                <div class="hidden md:flex space-x-8">
+                    <a href="{% url 'portal:dashboard' %}" class="font-primary text-accent hover:text-white transition-colors duration-300 text-sm uppercase tracking-wider">Dashboard</a>
+                    <a href="{% url 'portal:workflows' %}" class="font-primary text-accent hover:text-white transition-colors duration-300 text-sm uppercase tracking-wider">Workflows</a>
+                    <a href="{% url 'portal:executions' %}" class="font-primary text-accent hover:text-white transition-colors duration-300 text-sm uppercase tracking-wider">Executions</a>
+                    <a href="{% url 'portal:invoices' %}" class="font-primary text-accent hover:text-white transition-colors duration-300 text-sm uppercase tracking-wider">Invoices</a>
+                    <a href="{% url 'portal:support' %}" class="font-primary text-accent hover:text-white transition-colors duration-300 text-sm uppercase tracking-wider">Support</a>
+                </div>
 
-        <div class="portal-content">
-            <div class="portal-content__inner">
-                {% if messages %}
-                <div class="mb-4">
-                    {% for message in messages %}
-                    <div class="alert
-                        {% if message.tags == 'success' %}alert--success
-                        {% elif message.tags == 'error' %}alert--error
-                        {% elif message.tags == 'warning' %}alert--warning
-                        {% else %}alert--info{% endif %}">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
+                <!-- User Menu -->
+                <div class="flex items-center space-x-4">
+                    <span class="font-secondary text-accent text-xs uppercase">{{ user.username }}</span>
+                    <form method="post" action="{% url 'portal:logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-primary">
+                            Logout
+                        </button>
+                    </form>
                 </div>
                 {% endif %}
-
-                {% block content %}{% endblock %}
             </div>
         </div>
-    </main>
-    {% else %}
-    {% block content %}{% endblock %}
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="fixed top-20 right-4 z-40 max-w-md">
+        {% for message in messages %}
+        <div class="glass-container mb-4 fade-in {% if message.tags == 'success' %}border-green-500{% elif message.tags == 'error' %}border-red-500{% else %}border-blue-500{% endif %}" style="border-width: 1px;">
+            <p class="font-secondary text-sm">{{ message }}</p>
+        </div>
+        {% endfor %}
+    </div>
     {% endif %}
 
-    {% block extra_js %}{% endblock %}
+    <!-- Content wrapper with padding for fixed nav -->
+    <div class="pt-16">
+        {% block content %}{% endblock %}
+    </div>
 </body>
 </html>

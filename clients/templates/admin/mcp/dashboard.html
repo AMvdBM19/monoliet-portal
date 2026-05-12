@@ -3,86 +3,284 @@
 
 {% block title %}MCP SERVER // COMMAND CENTER{% endblock %}
 
+{% block extrastyle %}
+{{ block.super }}
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+    /* Palantir-inspired MCP Dashboard */
+    .mcp-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .mcp-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .mcp-card {
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(155, 155, 155, 0.2);
+        padding: 1.5rem;
+        border-radius: 4px;
+    }
+
+    .mcp-card-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #9B9B9B;
+        margin-bottom: 1rem;
+    }
+
+    .mcp-stat {
+        font-family: 'Space Mono', monospace;
+        font-size: 2rem;
+        color: #FFFFFF;
+        margin-bottom: 0.5rem;
+    }
+
+    .mcp-label {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.875rem;
+        color: #DBDBDB;
+    }
+
+    .mcp-status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 2px;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-operational {
+        background: rgba(46, 213, 115, 0.1);
+        color: #2ED573;
+        border: 1px solid #2ED573;
+    }
+
+    .status-degraded {
+        background: rgba(255, 165, 2, 0.1);
+        color: #FFA502;
+        border: 1px solid #FFA502;
+    }
+
+    .status-offline {
+        background: rgba(255, 71, 87, 0.1);
+        color: #FF4757;
+        border: 1px solid #FF4757;
+    }
+
+    .status-unknown {
+        background: rgba(155, 155, 155, 0.1);
+        color: #9B9B9B;
+        border: 1px solid #9B9B9B;
+    }
+
+    .mcp-workflow-item {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(155, 155, 155, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .mcp-workflow-name {
+        font-family: 'Space Grotesk', sans-serif;
+        color: #FFFFFF;
+        font-size: 0.95rem;
+    }
+
+    .mcp-btn {
+        background: transparent;
+        border: 1px solid rgba(155, 155, 155, 0.3);
+        color: #9B9B9B;
+        padding: 6px 12px;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s;
+        border-radius: 0;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .mcp-btn:hover {
+        border-color: #FFFFFF;
+        color: #FFFFFF;
+    }
+
+    .error-message {
+        background: rgba(255, 71, 87, 0.1);
+        border: 1px solid #FF4757;
+        color: #FF4757;
+        padding: 1rem;
+        border-radius: 4px;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.875rem;
+    }
+
+    .error-message a {
+        color: #FFFFFF;
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="admin-page">
-    <div class="flex-between mb-5">
-        <h1>MCP COMMAND CENTER</h1>
+<div class="mcp-container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 style="font-family: 'Space Grotesk', sans-serif; color: #FFFFFF; font-size: 2rem; letter-spacing: 0.1em; margin: 0;">
+            MCP COMMAND CENTER
+        </h1>
     </div>
 
-    <nav class="admin-tabs">
-        <a href="{% url 'mcp_dashboard' %}" class="admin-tab admin-tab--active">OVERVIEW</a>
-        <a href="{% url 'mcp_workflows' %}" class="admin-tab">WORKFLOWS</a>
-        <a href="{% url 'execution_dashboard' %}" class="admin-tab">EXECUTIONS</a>
-    </nav>
+    <!-- Navigation Tabs -->
+    <div style="display: flex; gap: 0; margin-bottom: 2rem; border-bottom: 1px solid rgba(155, 155, 155, 0.2);">
+        <a href="{% url 'mcp_dashboard' %}"
+           style="
+               font-family: 'Space Mono', monospace;
+               font-size: 0.75rem;
+               text-transform: uppercase;
+               letter-spacing: 0.05em;
+               color: #FFFFFF;
+               padding: 0.75rem 1.5rem;
+               text-decoration: none;
+               border-bottom: 2px solid #FFFFFF;
+               background: rgba(255, 255, 255, 0.05);
+               margin-bottom: -1px;
+           ">
+            OVERVIEW
+        </a>
+        <a href="{% url 'mcp_workflows' %}"
+           style="
+               font-family: 'Space Mono', monospace;
+               font-size: 0.75rem;
+               text-transform: uppercase;
+               letter-spacing: 0.05em;
+               color: #9B9B9B;
+               padding: 0.75rem 1.5rem;
+               text-decoration: none;
+               border-bottom: 2px solid transparent;
+               transition: all 0.3s;
+               margin-bottom: -1px;
+           "
+           onmouseover="this.style.color='#FFFFFF'; this.style.borderBottomColor='rgba(255,255,255,0.5)';"
+           onmouseout="this.style.color='#9B9B9B'; this.style.borderBottomColor='transparent';">
+            WORKFLOWS
+        </a>
+        <a href="{% url 'execution_dashboard' %}"
+           style="
+               font-family: 'Space Mono', monospace;
+               font-size: 0.75rem;
+               text-transform: uppercase;
+               letter-spacing: 0.05em;
+               color: #9B9B9B;
+               padding: 0.75rem 1.5rem;
+               text-decoration: none;
+               border-bottom: 2px solid transparent;
+               transition: all 0.3s;
+               margin-bottom: -1px;
+           "
+           onmouseover="this.style.color='#FFFFFF'; this.style.borderBottomColor='rgba(255,255,255,0.5)';"
+           onmouseout="this.style.color='#9B9B9B'; this.style.borderBottomColor='transparent';">
+            EXECUTIONS
+        </a>
+    </div>
 
     {% if error %}
-    <div class="alert alert--error">
+    <div class="error-message">
         <strong>ERROR:</strong> {{ error }}
     </div>
     {% elif not mcp_enabled %}
-    <div class="alert alert--error">
+    <div class="error-message">
         MCP Server integration is not enabled. Please configure in <a href="/admin/clients/portalsettings/1/change/">Portal Settings</a>.
     </div>
     {% else %}
 
-    <div class="grid-4 mb-5">
-        <div class="glass-card">
-            <div class="label mb-3">Server Status</div>
-            <div class="mb-2">
-                <span class="badge badge--{% if server_status.status == 'operational' %}green{% elif server_status.status == 'degraded' %}yellow{% elif server_status.status == 'offline' %}red{% else %}gray{% endif %}">
+    <!-- Status Cards -->
+    <div class="mcp-grid">
+        <!-- Server Status -->
+        <div class="mcp-card">
+            <div class="mcp-card-title">Server Status</div>
+            <div class="mcp-stat">
+                <span class="mcp-status-badge status-{{ server_status.status }}">
                     {{ server_status.status|upper }}
                 </span>
             </div>
-            <div>Uptime: {{ server_status.uptime_seconds|floatformat:0 }}s</div>
+            <div class="mcp-label">
+                Uptime: {{ server_status.uptime_seconds|floatformat:0 }}s
+            </div>
         </div>
 
-        <div class="glass-card">
-            <div class="label mb-3">Total Workflows</div>
-            <div class="stat-card__value mb-2" style="font-size: 2rem;">{{ workflow_stats.total_workflows }}</div>
-            <div>{{ workflow_stats.active_workflows }} active, {{ workflow_stats.paused_workflows }} paused</div>
+        <!-- Workflow Stats -->
+        <div class="mcp-card">
+            <div class="mcp-card-title">Total Workflows</div>
+            <div class="mcp-stat">{{ workflow_stats.total_workflows }}</div>
+            <div class="mcp-label">
+                {{ workflow_stats.active_workflows }} active,
+                {{ workflow_stats.paused_workflows }} paused
+            </div>
         </div>
 
-        <div class="glass-card">
-            <div class="label mb-3">Executions Today</div>
-            <div class="stat-card__value mb-2" style="font-size: 2rem;">{{ workflow_stats.total_executions_today }}</div>
-            <div>Success Rate: {{ workflow_stats.success_rate|floatformat:1 }}%</div>
+        <div class="mcp-card">
+            <div class="mcp-card-title">Executions Today</div>
+            <div class="mcp-stat">{{ workflow_stats.total_executions_today }}</div>
+            <div class="mcp-label">
+                Success Rate: {{ workflow_stats.success_rate|floatformat:1 }}%
+            </div>
         </div>
 
-        <div class="glass-card">
-            <div class="label mb-3">n8n Connection</div>
-            <div class="mb-2">
+        <!-- n8n Connection -->
+        <div class="mcp-card">
+            <div class="mcp-card-title">n8n Connection</div>
+            <div class="mcp-stat">
                 {% if server_status.n8n_connected %}
-                <span class="badge badge--green">CONNECTED</span>
+                <span class="mcp-status-badge status-operational">CONNECTED</span>
                 {% else %}
-                <span class="badge badge--red">DISCONNECTED</span>
+                <span class="mcp-status-badge status-offline">DISCONNECTED</span>
                 {% endif %}
             </div>
-            <div class="label" style="word-break: break-all;">{{ server_status.n8n_url }}</div>
+            <div class="mcp-label" style="font-size: 0.75rem; word-break: break-all;">
+                {{ server_status.n8n_url }}
+            </div>
         </div>
     </div>
 
-    <div class="glass-card mt-5">
-        <div class="flex-between mb-3">
-            <div class="label">Recent Workflows</div>
-            <a href="{% url 'mcp_workflows' %}" class="btn btn-ghost btn-sm">VIEW ALL</a>
+    <!-- Recent Workflows -->
+    <div class="mcp-card" style="margin-top: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div class="mcp-card-title" style="margin-bottom: 0;">Recent Workflows</div>
+            <a href="{% url 'mcp_workflows' %}" class="mcp-btn">VIEW ALL</a>
         </div>
 
         {% for workflow in workflows %}
-        <div class="flex-between" style="padding: 1rem 0; border-bottom: 1px solid var(--border);">
+        <div class="mcp-workflow-item">
             <div>
-                <div class="text-primary">{{ workflow.name }}</div>
-                <div class="label mt-1">ID: {{ workflow.id }}</div>
+                <div class="mcp-workflow-name">{{ workflow.name }}</div>
+                <div class="mcp-label" style="font-size: 0.75rem; color: #9B9B9B;">
+                    ID: {{ workflow.id }}
+                </div>
             </div>
             <div>
                 {% if workflow.active %}
-                <span class="badge badge--green">ACTIVE</span>
+                <span class="mcp-status-badge status-operational">ACTIVE</span>
                 {% else %}
-                <span class="badge badge--yellow">PAUSED</span>
+                <span class="mcp-status-badge status-degraded">PAUSED</span>
                 {% endif %}
             </div>
         </div>
         {% empty %}
-        <div class="text-center p-3 label">
+        <div class="mcp-label" style="text-align: center; padding: 2rem; color: #9B9B9B;">
             No workflows found
         </div>
         {% endfor %}
@@ -92,10 +290,13 @@
 </div>
 
 <script>
+// Auto-refresh stats every 30 seconds
 setInterval(async () => {
     try {
         const response = await fetch('{% url "mcp_stats" %}');
         const stats = await response.json();
+
+        // Update UI with new stats (basic implementation)
         console.log('Updated stats:', stats);
     } catch (error) {
         console.error('Failed to refresh stats:', error);
