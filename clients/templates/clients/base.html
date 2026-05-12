@@ -14,7 +14,6 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% if user.is_authenticated %}
     <aside class="portal-sidebar" id="portal-sidebar">
         <div class="portal-sidebar__logo">
             <a href="{% url 'portal:dashboard' %}">MONOLIET</a>
@@ -47,11 +46,13 @@
         <header class="portal-header">
             <div class="portal-header__title">{% block page_title %}{% endblock %}</div>
             <div class="portal-header__user">
+                {% if user.is_authenticated %}
                 <span>{{ user.username }}</span>
                 <form method="post" action="{% url 'portal:logout' %}">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-ghost btn-sm">Logout</button>
                 </form>
+                {% endif %}
             </div>
         </header>
 
@@ -75,9 +76,6 @@
             </div>
         </div>
     </main>
-    {% else %}
-    {% block content %}{% endblock %}
-    {% endif %}
 
     {% block extra_js %}{% endblock %}
 </body>
