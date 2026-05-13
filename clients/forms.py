@@ -20,16 +20,16 @@ class SupportTicketForm(forms.ModelForm):
         fields = ['subject', 'description', 'priority']
         widgets = {
             'subject': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                'class': 'form-input',
                 'placeholder': 'Enter a brief subject line'
             }),
             'description': forms.Textarea(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                'class': 'form-input',
                 'rows': 6,
                 'placeholder': 'Describe your issue in detail'
             }),
             'priority': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                'class': 'form-select'
             }),
         }
         labels = {
