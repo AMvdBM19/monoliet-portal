@@ -8,8 +8,12 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
 from django.db.models import Count, Sum, Q
 from django.utils import timezone
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from datetime import timedelta
-from .models import Client, Workflow, Execution, Invoice, SupportTicket, PortalSettings
+import json
+import requests as http_requests
+from .models import Client, Workflow, Execution, Invoice, SupportTicket, PortalSettings, AIConversation
 
 
 @staff_member_required
@@ -97,6 +101,20 @@ def admin_dashboard(request):
     portal_settings = PortalSettings.objects.first()
     mcp_enabled = portal_settings and portal_settings.mcp_server_enabled
 
+    # Revenue snapshot
+    from decimal import Decimal
+    mrr = Client.objects.filter(status='active').aggregate(
+        total=Sum('monthly_fee')
+    )['total'] or Decimal('0.00')
+    arr = mrr * 12
+    overdue_revenue = Invoice.objects.filter(
+        status='pending',
+        due_date__lt=timezone.now().date()
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    pending_revenue = Invoice.objects.filter(
+        status='pending'
+    ).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
     context = {
         'total_clients': total_clients,
         'new_clients_this_month': new_clients_this_month,
@@ -114,7 +132,117 @@ def admin_dashboard(request):
         'executions_labels': executions_labels,
         'executions_success': executions_success,
         'executions_errors': executions_errors,
-        'mcp_enabled': mcp_enabled,  # NEW: MCP Server status
+        'mcp_enabled': mcp_enabled,
+        'mrr': round(mrr, 2),
+        'arr': round(arr, 2),
+        'overdue_revenue': round(overdue_revenue, 2),
+        'pending_revenue': round(pending_revenue, 2),
     }
 
     return render(request, 'admin/index.html', context)
+
+
+def build_admin_context(user):
+    """Build system prompt context for the admin AI assistant."""
+    total_clients = Client.objects.count()
+    active_clients = Client.objects.filter(status='active').count()
+    active_workflows = Workflow.objects.filter(status='active').count()
+    error_workflows = Workflow.objects.filter(status='error').count()
+
+    open_tickets = SupportTicket.objects.filter(status__in=['open', 'in_progress']).count()
+    high_priority_tickets = SupportTicket.objects.filter(status='open', priority='high').count()
+
+    from datetime import date
+    overdue_invoices = Invoice.objects.filter(status='pending', due_date__lt=date.today()).count()
+    pending_invoices = Invoice.objects.filter(status='pending').count()
+
+    today = timezone.now().date()
+    today_executions = Execution.objects.filter(execution_date=today).aggregate(
+        total=Sum('total_count'),
+        success=Sum('success_count'),
+        errors=Sum('error_count')
+    )
+
+    return (
+        "You are Monoliet's internal admin assistant. You help Andres manage the ERP/CRM portal. "
+        "Be concise, direct, and use data when possible. "
+        "Current state: " + str(total_clients) + " clients (" + str(active_clients) + " active), "
+        + str(active_workflows) + " active workflows (" + str(error_workflows) + " in error), "
+        + str(open_tickets) + " open support tickets (" + str(high_priority_tickets) + " high priority), "
+        + str(pending_invoices) + " pending invoices (" + str(overdue_invoices) + " overdue), "
+        "today's executions: " + str(today_executions['total'] or 0) + " total, "
+        + str(today_executions['success'] or 0) + " success, " + str(today_executions['errors'] or 0) + " errors."
+    )
+
+
+@staff_member_required
+@require_POST
+def ai_chat_view(request):
+    """AI assistant chat endpoint for admin panel."""
+    try:
+        body = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    user_message = body.get('message', '').strip()
+    conversation_id = body.get('conversation_id')
+
+    if not user_message:
+        return JsonResponse({'error': 'Message is required'}, status=400)
+
+    from django.conf import settings as django_settings
+    api_key = django_settings.ANTHROPIC_API_KEY
+    if not api_key:
+        return JsonResponse({'error': 'AI assistant not configured'}, status=503)
+
+    # Get or create conversation
+    if conversation_id:
+        try:
+            conversation = AIConversation.objects.get(id=conversation_id, user=request.user)
+        except AIConversation.DoesNotExist:
+            conversation = AIConversation.objects.create(
+                user=request.user, context_type='admin'
+            )
+    else:
+        conversation = AIConversation.objects.create(
+            user=request.user, context_type='admin'
+        )
+
+    # Load existing messages
+    messages_history = conversation.messages or []
+    messages_history.append({'role': 'user', 'content': user_message})
+
+    # Build system prompt
+    system_prompt = build_admin_context(request.user)
+
+    try:
+        response = http_requests.post(
+            'https://api.anthropic.com/v1/messages',
+            headers={
+                'x-api-key': api_key,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json',
+            },
+            json={
+                'model': 'claude-sonnet-4-20250514',
+                'max_tokens': 1024,
+                'system': system_prompt,
+                'messages': messages_history,
+            },
+            timeout=30,
+        )
+        response.raise_for_status()
+        data = response.json()
+        reply = data['content'][0]['text']
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+    # Save to conversation
+    messages_history.append({'role': 'assistant', 'content': reply})
+    conversation.messages = messages_history
+    conversation.save()
+
+    return JsonResponse({
+        'reply': reply,
+        'conversation_id': str(conversation.id),
+    })

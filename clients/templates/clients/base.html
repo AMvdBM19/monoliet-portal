@@ -39,6 +39,12 @@
                class="portal-sidebar__link{% if '/support' in request.path %} portal-sidebar__link--active{% endif %}">
                 Support
             </a>
+            {% if request.user.client_profile.client.feature_tier == 'growth' or request.user.client_profile.client.feature_tier == 'premium' %}
+            <a href="{% url 'portal:contacts' %}"
+               class="portal-sidebar__link{% if '/contacts' in request.path %} portal-sidebar__link--active{% endif %}">
+                Contacts
+            </a>
+            {% endif %}
         </nav>
     </aside>
 

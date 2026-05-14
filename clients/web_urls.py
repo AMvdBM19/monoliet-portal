@@ -24,6 +24,10 @@ urlpatterns = [
     path('invoices/', web_views.invoices_view, name='invoices'),
     path('support/', web_views.support_view, name='support'),
     path('support/create/', web_views.create_support_ticket_view, name='create-ticket'),
+    path('contacts/', web_views.contacts_view, name='contacts'),
+
+    # AI report API
+    path('api/ai/report/', web_views.ai_report_view, name='ai-report'),
 
     # Execution monitoring (client portal)
     path('executions/', web_views.executions_view, name='executions'),

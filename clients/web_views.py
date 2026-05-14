@@ -12,8 +12,9 @@ from django.http import JsonResponse
 from django.utils import timezone
 from datetime import date, timedelta
 
-from .models import Client, Workflow, Execution, Invoice, SupportTicket
+from .models import Client, Workflow, Execution, Invoice, SupportTicket, Contact
 from .forms import SupportTicketForm
+import requests as http_requests
 
 
 @login_required
@@ -363,3 +364,79 @@ def execution_stats_api(request):
         'total_errors': total_errors,
         'success_rate': round(success_rate, 1),
     })
+
+
+@login_required
+def contacts_view(request):
+    """
+    View showing all contacts for the client (Growth/Premium tier only).
+    """
+    if not hasattr(request.user, 'client_profile') or not request.user.client_profile.client:
+        return render(request, 'clients/no_client.html')
+
+    client = request.user.client_profile.client
+
+    if client.feature_tier not in ['growth', 'premium']:
+        return render(request, 'clients/feature_locked.html', {
+            'client': client,
+            'feature': 'Contacts',
+        })
+
+    contacts = client.contacts.all().order_by('-created_at')
+
+    context = {
+        'client': client,
+        'contacts': contacts,
+    }
+
+    return render(request, 'clients/contacts.html', context)
+
+
+@login_required
+def ai_report_view(request):
+    """Generate an AI-powered weekly report for the client's dashboard."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    if not hasattr(request.user, 'client_profile') or not request.user.client_profile.client:
+        return JsonResponse({'error': 'No client assigned'}, status=403)
+
+    client = request.user.client_profile.client
+
+    from .utils import build_report_context
+    from django.conf import settings as django_settings
+
+    api_key = django_settings.ANTHROPIC_API_KEY
+    if not api_key:
+        return JsonResponse({'error': 'AI reporting not configured'}, status=503)
+
+    context = build_report_context(client)
+    system_prompt = (
+        "You are a concise operations analyst. Given this data about "
+        + client.company_name + "'s automation workflows for the past 7 days, "
+        "write a 3-sentence plain-English summary a non-technical business owner "
+        "would understand. Lead with the most important metric. Be direct, no fluff."
+    )
+
+    try:
+        response = http_requests.post(
+            'https://api.anthropic.com/v1/messages',
+            headers={
+                'x-api-key': api_key,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json',
+            },
+            json={
+                'model': 'claude-sonnet-4-20250514',
+                'max_tokens': 800,
+                'system': system_prompt,
+                'messages': [{'role': 'user', 'content': context}],
+            },
+            timeout=30,
+        )
+        response.raise_for_status()
+        data = response.json()
+        reply = data['content'][0]['text']
+        return JsonResponse({'report': reply, 'generated_at': timezone.now().isoformat()})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

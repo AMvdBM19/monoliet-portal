@@ -11,7 +11,7 @@
 
 {% block userlinks %}
 <div class="admin-userlinks">
-    <a href="/admin/clients/portalsettings/1/change/" class="admin-userlinks__settings">⚙ SETTINGS</a>
+    <a href="/admin/clients/portalsettings/1/change/" class="admin-userlinks__settings">&#9881; SETTINGS</a>
     {{ block.super }}
 </div>
 {% endblock %}
@@ -26,4 +26,109 @@
 {% block extrastyle %}
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% endblock %}
+
+{% block footer %}
+{{ block.super }}
+<!-- AI Assistant Chat Widget -->
+<div id="ai-chat-toggle" style="position: fixed; bottom: 24px; right: 24px; width: 48px; height: 48px; background: var(--accent-green); border-radius: var(--radius-card); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; font-size: 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: var(--transition);" onclick="toggleChat()">AI</div>
+
+<div id="ai-chat-panel" style="display: none; position: fixed; bottom: 80px; right: 24px; width: 360px; max-height: 500px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-card); z-index: 9999; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.4);">
+    <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 600; color: var(--text-primary); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">AI Assistant</span>
+        <span style="cursor: pointer; color: var(--text-muted); font-size: 1.25rem;" onclick="toggleChat()">&times;</span>
+    </div>
+    <div id="ai-chat-messages" style="flex: 1; overflow-y: auto; padding: 16px; max-height: 340px; min-height: 200px;">
+        <div style="background: var(--glass-bg); padding: 10px 14px; border-radius: var(--radius-card); margin-bottom: 8px; border: 1px solid var(--border);">
+            <p style="color: var(--text-body); font-size: 0.8125rem; line-height: 1.6; font-family: 'Inter', sans-serif;">What can I help you with? You can ask about clients, workflows, revenue, or ask me to draft an email.</p>
+        </div>
+    </div>
+    <div style="padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px;">
+        <input type="text" id="ai-chat-input" placeholder="Type a message..." style="flex: 1; background: var(--glass-bg); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 8px 12px; color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: 0.8125rem; outline: none;" onkeypress="if(event.key==='Enter')sendChatMessage()">
+        <button onclick="sendChatMessage()" style="background: var(--accent-green); border: none; border-radius: var(--radius-card); padding: 8px 16px; color: var(--bg-primary); font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;">Send</button>
+    </div>
+</div>
+
+<script>
+var aiChatConversationId = null;
+var aiChatOpen = false;
+
+function toggleChat() {
+    var panel = document.getElementById('ai-chat-panel');
+    aiChatOpen = !aiChatOpen;
+    panel.style.display = aiChatOpen ? 'flex' : 'none';
+}
+
+function addChatMessage(role, content) {
+    var container = document.getElementById('ai-chat-messages');
+    var div = document.createElement('div');
+    var isUser = role === 'user';
+    div.style.cssText = 'padding: 10px 14px; border-radius: 4px; margin-bottom: 8px; border: 1px solid ' + (isUser ? 'var(--accent-green)' : 'var(--border)') + '; background: ' + (isUser ? 'rgba(34,197,94,0.1)' : 'var(--glass-bg)') + ';';
+    var label = document.createElement('span');
+    label.style.cssText = 'font-family: Space Mono, monospace; font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); display: block; margin-bottom: 4px;';
+    label.textContent = isUser ? 'YOU' : 'ASSISTANT';
+    var p = document.createElement('p');
+    p.style.cssText = 'color: var(--text-body); font-size: 0.8125rem; line-height: 1.6; font-family: Inter, sans-serif; white-space: pre-wrap;';
+    p.textContent = content;
+    div.appendChild(label);
+    div.appendChild(p);
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function sendChatMessage() {
+    var input = document.getElementById('ai-chat-input');
+    var message = input.value.trim();
+    if (!message) return;
+
+    addChatMessage('user', message);
+    input.value = '';
+
+    var loadingDiv = document.createElement('div');
+    loadingDiv.id = 'ai-chat-loading';
+    loadingDiv.style.cssText = 'padding: 10px 14px; margin-bottom: 8px;';
+    loadingDiv.innerHTML = '<span style="font-family: Space Mono, monospace; font-size: 0.75rem; color: var(--text-muted);">Thinking...</span>';
+    document.getElementById('ai-chat-messages').appendChild(loadingDiv);
+
+    var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    var csrf = '';
+    if (csrfToken) {
+        csrf = csrfToken.value;
+    } else {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var c = cookies[i].trim();
+            if (c.indexOf('csrftoken=') === 0) { csrf = c.substring(10); break; }
+        }
+    }
+
+    fetch('/admin/ai/chat/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrf,
+        },
+        body: JSON.stringify({
+            message: message,
+            conversation_id: aiChatConversationId,
+        }),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var loading = document.getElementById('ai-chat-loading');
+        if (loading) loading.remove();
+        if (data.reply) {
+            addChatMessage('assistant', data.reply);
+            aiChatConversationId = data.conversation_id;
+        } else {
+            addChatMessage('assistant', 'Error: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(function(err) {
+        var loading = document.getElementById('ai-chat-loading');
+        if (loading) loading.remove();
+        addChatMessage('assistant', 'Connection error. Please try again.');
+    });
+}
+</script>
 {% endblock %}

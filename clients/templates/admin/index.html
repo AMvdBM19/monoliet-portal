@@ -17,7 +17,7 @@
         <div class="stat-card">
             <div class="stat-card__label">Total Clients</div>
             <div class="stat-card__value">{{ total_clients|default:"0" }}</div>
-            <div class="stat-card__delta stat-card__delta--up">↑ {{ new_clients_this_month|default:"0" }} THIS MONTH</div>
+            <div class="stat-card__delta stat-card__delta--up">&uarr; {{ new_clients_this_month|default:"0" }} THIS MONTH</div>
         </div>
 
         <div class="stat-card">
@@ -29,13 +29,36 @@
         <div class="stat-card">
             <div class="stat-card__label">Monthly Revenue</div>
             <div class="stat-card__value">${{ monthly_revenue|default:"0" }}</div>
-            <div class="stat-card__delta stat-card__delta--up">↑ ${{ revenue_growth|default:"0" }}</div>
+            <div class="stat-card__delta stat-card__delta--up">&uarr; ${{ revenue_growth|default:"0" }}</div>
         </div>
 
         <div class="stat-card">
             <div class="stat-card__label">Executions Today</div>
             <div class="stat-card__value">{{ executions_today|default:"0" }}</div>
             <div class="stat-card__delta">{{ success_rate|default:"0" }}% SUCCESS</div>
+        </div>
+    </div>
+
+    <div class="grid-4 mb-5">
+        <div class="stat-card">
+            <div class="stat-card__label">MRR</div>
+            <div class="stat-card__value">${{ mrr|default:"0" }}</div>
+            <div class="stat-card__delta">MONTHLY RECURRING</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card__label">ARR</div>
+            <div class="stat-card__value">${{ arr|default:"0" }}</div>
+            <div class="stat-card__delta">ANNUAL RECURRING</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card__label">Overdue</div>
+            <div class="stat-card__value" style="color: var(--accent-error);">${{ overdue_revenue|default:"0" }}</div>
+            <div class="stat-card__delta">PAST DUE</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card__label">Pending</div>
+            <div class="stat-card__value" style="color: var(--accent-warning);">${{ pending_revenue|default:"0" }}</div>
+            <div class="stat-card__delta">AWAITING PAYMENT</div>
         </div>
     </div>
 
@@ -66,11 +89,11 @@
                     Manage n8n workflows through the MCP server interface. Monitor status, execute workflows, and view real-time analytics.
                 </p>
                 <a href="{% url 'mcp_dashboard' %}" class="btn btn-ghost text-green" style="border-color: rgba(34,197,94,0.5);">
-                    OPEN MCP DASHBOARD →
+                    OPEN MCP DASHBOARD &rarr;
                 </a>
             </div>
             <div class="text-center p-3">
-                <div class="text-green mono" style="font-size: 3rem;">⚡</div>
+                <div class="text-green mono" style="font-size: 3rem;">&#9889;</div>
                 <div class="label mt-2">MCP SERVER</div>
             </div>
         </div>
@@ -85,11 +108,11 @@
                     Monitor and analyze n8n workflow executions in real-time. View success rates, track errors, and analyze execution trends.
                 </p>
                 <a href="{% url 'execution_dashboard' %}" class="btn btn-ghost text-blue" style="border-color: rgba(59,130,246,0.5);">
-                    OPEN EXECUTION MONITOR →
+                    OPEN EXECUTION MONITOR &rarr;
                 </a>
             </div>
             <div class="text-center p-3">
-                <div class="text-blue mono" style="font-size: 3rem;">📊</div>
+                <div class="text-blue mono" style="font-size: 3rem;">&#128202;</div>
                 <div class="label mt-2">EXECUTIONS</div>
             </div>
         </div>
@@ -100,7 +123,7 @@
 </div>
 
 <script>
-    const chartConfig = {
+    var chartConfig = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
@@ -155,7 +178,7 @@
                 borderWidth: 0
             }]
         },
-        options: { ...chartConfig, scales: {} }
+        options: Object.assign({}, chartConfig, {scales: {}})
     });
 
     // Executions Chart

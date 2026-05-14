@@ -1,0 +1,50 @@
+{% extends "clients/base.html" %}
+{% block title %}Contacts - Monoliet Portal{% endblock %}
+{% block page_title %}Contacts{% endblock %}
+{% block content %}
+<div class="page-header">
+    <span class="page-header__eyebrow">CRM</span>
+    <h1 class="page-header__title">Contacts</h1>
+    <p class="page-header__sub">Your captured leads and business contacts.</p>
+</div>
+
+{% if contacts %}
+<div class="glass-card glass-card--flat">
+    <div class="overflow-x-auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>NAME</th>
+                    <th>EMAIL</th>
+                    <th>COMPANY</th>
+                    <th>STATUS</th>
+                    <th>SOURCE</th>
+                    <th>CREATED</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for contact in contacts %}
+                <tr>
+                    <td class="text-primary">{{ contact.first_name }} {{ contact.last_name }}</td>
+                    <td class="mono text-muted">{{ contact.email|default:"-" }}</td>
+                    <td>{{ contact.company|default:"-" }}</td>
+                    <td>
+                        <span class="badge badge--{% if contact.status == 'customer' %}green{% elif contact.status == 'prospect' %}blue{% elif contact.status == 'lead' %}yellow{% else %}gray{% endif %}">
+                            {{ contact.get_status_display|upper }}
+                        </span>
+                    </td>
+                    <td class="label">{{ contact.source|default:"-" }}</td>
+                    <td class="mono text-muted">{{ contact.created_at|date:"Y-m-d" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="glass-card glass-card--flat text-center" style="padding: 3rem;">
+    <p class="label" style="font-size: 1rem; margin-bottom: 0.5rem;">NO CONTACTS YET</p>
+    <p class="text-muted">They will appear here automatically when your workflows capture leads.</p>
+</div>
+{% endif %}
+{% endblock %}

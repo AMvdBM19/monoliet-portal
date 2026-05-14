@@ -215,3 +215,6 @@ ENCRYPTION_KEY = config('ENCRYPTION_KEY', default='')
 
 # Notion Intake Session token (used by n8n to authenticate intake API calls)
 INTAKE_TOKEN = config('INTAKE_TOKEN', default='change-me')
+
+# Claude API for AI features
+ANTHROPIC_API_KEY = config('ANTHROPIC_API_KEY', default='')

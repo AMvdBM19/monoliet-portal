@@ -1,0 +1,10 @@
+{% extends "clients/base.html" %}
+{% block title %}Feature Locked - Monoliet Portal{% endblock %}
+{% block page_title %}Feature Locked{% endblock %}
+{% block content %}
+<div class="glass-card glass-card--flat text-center" style="padding: 3rem;">
+    <p class="label" style="font-size: 1.25rem; margin-bottom: 1rem;">{{ feature|upper }} — GROWTH TIER REQUIRED</p>
+    <p class="text-muted" style="margin-bottom: 1.5rem;">This feature is available on the Growth and Premium tiers. Contact your account manager to upgrade.</p>
+    <a href="{% url 'portal:dashboard' %}" class="btn btn-ghost">BACK TO DASHBOARD</a>
+</div>
+{% endblock %}

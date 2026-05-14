@@ -59,7 +59,7 @@ def decrypt_credential(encrypted_data: str) -> dict:
         decrypted = cipher.decrypt(encrypted_data.encode())
         return json.loads(decrypted.decode())
     except Exception as e:
-        raise ValueError(f"Failed to decrypt credential: {str(e)}")
+        raise ValueError("Failed to decrypt credential: " + str(e))
 
 
 def generate_invoice_number() -> str:
@@ -77,7 +77,7 @@ def generate_invoice_number() -> str:
 
     # Get the last invoice number for this year
     last_invoice = Invoice.objects.filter(
-        invoice_number__startswith=f'INV-{year}-'
+        invoice_number__startswith='INV-' + str(year) + '-'
     ).order_by('-invoice_number').first()
 
     if last_invoice:
@@ -88,7 +88,7 @@ def generate_invoice_number() -> str:
         # First invoice of the year
         new_number = 1
 
-    return f'INV-{year}-{new_number:03d}'
+    return 'INV-' + str(year) + '-' + str(new_number).zfill(3)
 
 
 class N8NAPIClient:
@@ -123,7 +123,7 @@ class N8NAPIClient:
         Raises:
             requests.exceptions.RequestException: If the request fails
         """
-        url = f"{self.base_url}/api/v1/{endpoint}"
+        url = self.base_url + "/api/v1/" + endpoint
 
         try:
             response = requests.request(
@@ -137,7 +137,7 @@ class N8NAPIClient:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            raise Exception(f"n8n API request failed: {str(e)}")
+            raise Exception("n8n API request failed: " + str(e))
 
     def get_workflow(self, workflow_id: str) -> Dict:
         """
@@ -149,7 +149,7 @@ class N8NAPIClient:
         Returns:
             Dictionary containing workflow information
         """
-        return self._make_request('GET', f'workflows/{workflow_id}')
+        return self._make_request('GET', 'workflows/' + workflow_id)
 
     def get_workflows(self) -> List[Dict]:
         """
@@ -235,7 +235,7 @@ class N8NAPIClient:
             Dictionary containing execution details
         """
         params = {'includeData': 'true' if include_data else 'false'}
-        return self._make_request('GET', f'executions/{execution_id}', params=params)
+        return self._make_request('GET', 'executions/' + execution_id, params=params)
 
     def get_workflow_executions(
         self,
@@ -274,7 +274,7 @@ class N8NAPIClient:
         """
         workflow = self.get_workflow(workflow_id)
         workflow['active'] = True
-        return self._make_request('PUT', f'workflows/{workflow_id}', data=workflow)
+        return self._make_request('PUT', 'workflows/' + workflow_id, data=workflow)
 
     def deactivate_workflow(self, workflow_id: str) -> Dict:
         """
@@ -288,7 +288,7 @@ class N8NAPIClient:
         """
         workflow = self.get_workflow(workflow_id)
         workflow['active'] = False
-        return self._make_request('PUT', f'workflows/{workflow_id}', data=workflow)
+        return self._make_request('PUT', 'workflows/' + workflow_id, data=workflow)
 
 
 def sync_workflow_from_n8n(n8n_workflow_id: str) -> Dict:
@@ -345,6 +345,56 @@ def get_n8n_client() -> N8NAPIClient:
     return N8NAPIClient()
 
 
+def build_report_context(client):
+    """Build a context string for the AI report endpoint."""
+    from clients.models import Execution, Workflow, SupportTicket, Invoice
+    from django.db.models import Sum
+    from datetime import date, timedelta
+
+    seven_days_ago = date.today() - timedelta(days=7)
+
+    # Workflow stats
+    total_workflows = client.workflows.count()
+    active_workflows = client.workflows.filter(status='active').count()
+    error_workflows = client.workflows.filter(status='error').count()
+
+    # Execution stats (last 7 days)
+    exec_stats = Execution.objects.filter(
+        client=client,
+        execution_date__gte=seven_days_ago
+    ).aggregate(
+        total=Sum('total_count'),
+        success=Sum('success_count'),
+        errors=Sum('error_count')
+    )
+
+    # Open tickets
+    open_tickets = client.support_tickets.filter(
+        status__in=['open', 'in_progress']
+    ).count()
+
+    # Pending invoices
+    pending_invoices = client.invoices.filter(status='pending').count()
+    overdue_invoices = client.invoices.filter(
+        status='pending',
+        due_date__lt=date.today()
+    ).count()
+
+    total_execs = exec_stats['total'] or 0
+    success_execs = exec_stats['success'] or 0
+    error_execs = exec_stats['errors'] or 0
+    success_rate = round((success_execs / total_execs * 100), 1) if total_execs > 0 else 0
+
+    return (
+        "Company: " + client.company_name + "\n"
+        "Period: last 7 days\n"
+        "Workflows: " + str(active_workflows) + " active, " + str(error_workflows) + " in error state, " + str(total_workflows) + " total\n"
+        "Executions: " + str(total_execs) + " total, " + str(success_execs) + " successful, " + str(error_execs) + " errors (" + str(success_rate) + "% success rate)\n"
+        "Open support tickets: " + str(open_tickets) + "\n"
+        "Pending invoices: " + str(pending_invoices) + " (" + str(overdue_invoices) + " overdue)"
+    )
+
+
 def get_client_statistics(client_id: str) -> Dict:
     """
     Get comprehensive statistics for a specific client.
@@ -356,7 +406,7 @@ def get_client_statistics(client_id: str) -> Dict:
         Dictionary containing client statistics
     """
     from clients.models import Client, Workflow, Execution, Invoice, SupportTicket
-    from django.db.models import Sum, Count
+    from django.db.models import Sum, Count, Q
 
     client = Client.objects.get(id=client_id)
 
@@ -374,13 +424,13 @@ def get_client_statistics(client_id: str) -> Dict:
     # Invoice stats
     invoice_stats = client.invoices.aggregate(
         total_invoiced=Sum('amount'),
-        pending_amount=Sum('amount', filter=models.Q(status='pending'))
+        pending_amount=Sum('amount', filter=Q(status='pending'))
     )
 
     # Support ticket stats
     ticket_stats = client.support_tickets.aggregate(
         total_tickets=Count('id'),
-        open_tickets=Count('id', filter=models.Q(status='open'))
+        open_tickets=Count('id', filter=Q(status='open'))
     )
 
     return {

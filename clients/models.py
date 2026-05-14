@@ -47,6 +47,19 @@ class Client(models.Model):
         validators=[MinValueValidator(Decimal('0.00'))]
     )
     billing_cycle = models.CharField(max_length=20, choices=BILLING_CYCLE_CHOICES, default='monthly')
+
+    TIER_CHOICES = [
+        ('starter', 'Starter'),
+        ('growth', 'Growth'),
+        ('premium', 'Premium'),
+    ]
+    feature_tier = models.CharField(
+        max_length=20,
+        choices=TIER_CHOICES,
+        default='starter',
+        help_text="Controls access to gated portal features"
+    )
+
     next_billing_date = models.DateField()
     notes = models.TextField(blank=True, help_text="Internal notes, hidden from client")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -401,3 +414,93 @@ class NotionIntakeSession(models.Model):
 
     def __str__(self):
         return f"IntakeSession {self.chat_id} ({self.status})"
+
+
+class ClientEvent(models.Model):
+    """Records significant state changes for a client for audit/timeline display."""
+    EVENT_TYPE_CHOICES = [
+        ('status_change', 'Status Change'),
+        ('workflow_error', 'Workflow Error'),
+        ('invoice_paid', 'Invoice Paid'),
+        ('ticket_resolved', 'Ticket Resolved'),
+        ('onboarding_step', 'Onboarding Step'),
+        ('note', 'Admin Note'),
+    ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE,
+                               related_name='events')
+    event_type = models.CharField(max_length=30, choices=EVENT_TYPE_CHOICES)
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL,
+                                   null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Client Event'
+        verbose_name_plural = 'Client Events'
+
+    def __str__(self):
+        return f"{self.client.company_name} — {self.title}"
+
+
+class Contact(models.Model):
+    """A business contact linked to a client. Fed by n8n automations or manual entry."""
+    STATUS_CHOICES = [
+        ('lead', 'Lead'),
+        ('prospect', 'Prospect'),
+        ('customer', 'Customer'),
+        ('churned', 'Churned'),
+    ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE,
+                               related_name='contacts')
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100, blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=50, blank=True)
+    company = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES,
+                              default='lead')
+    source = models.CharField(max_length=100, blank=True,
+                              help_text="e.g. 'website', 'n8n-lead-capture'")
+    notes = models.TextField(blank=True)
+    tags = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Contact'
+        verbose_name_plural = 'Contacts'
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.client.company_name})"
+
+
+class AIConversation(models.Model):
+    """Stores AI assistant conversation history per user session."""
+    CONTEXT_CHOICES = [
+        ('admin', 'Admin Assistant'),
+        ('client', 'Client Assistant'),
+    ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE,
+                             related_name='ai_conversations')
+    client = models.ForeignKey(Client, on_delete=models.SET_NULL,
+                               null=True, blank=True, related_name='ai_conversations')
+    context_type = models.CharField(max_length=20, choices=CONTEXT_CHOICES,
+                                    default='client')
+    messages = models.JSONField(default=list)
+    # stored as [{"role": "user"|"assistant", "content": "..."}]
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        verbose_name = 'AI Conversation'
+        verbose_name_plural = 'AI Conversations'
+
+    def __str__(self):
+        return f"{self.user.username} — {self.context_type} — {self.created_at.date()}"

@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from clients.admin_views import admin_dashboard
+from clients.admin_views import admin_dashboard, ai_chat_view
 from clients import mcp_admin_views
 from clients import execution_admin_views
 
@@ -24,6 +24,9 @@ urlpatterns = [
     path('admin/executions/sync/', execution_admin_views.sync_executions_view, name='sync_executions'),
     path('admin/executions/api/stats/', execution_admin_views.execution_stats_api, name='execution_stats_api'),
     path('admin/executions/api/chart/', execution_admin_views.execution_chart_data_api, name='execution_chart_api'),
+
+    # AI Assistant
+    path('admin/ai/chat/', ai_chat_view, name='ai_chat'),
 
     # Django admin (MUST BE AFTER MCP/Execution routes!)
     path('admin/', admin.site.urls),

@@ -254,7 +254,7 @@ API uses DRF Token auth. Client portal uses Django session auth.
 ## Models — quick reference
 
 ```
-Client          — company, billing, plan_tier, status (active/paused/churned)
+Client          — company, billing, plan_tier, feature_tier (starter/growth/premium), status (active/paused/churned)
 Workflow        — linked to Client, n8n_workflow_id, status (active/paused/error)
 Execution       — daily stats per Workflow (total/success/error counts)
 Invoice         — billing records, auto-generated invoice numbers (INV-YYYY-XXX)
@@ -263,6 +263,9 @@ APICredential   — Fernet-encrypted third-party credentials
 ClientProfile   — OneToOne(User) → ForeignKey(Client)
 PortalSettings  — singleton config (n8n API, MCP server settings)
 NotionIntakeSession — Telegram bot session state for n8n intake workflow
+ClientEvent     — audit log / activity timeline per client (Phase 2)
+Contact         — simple CRM contacts linked to clients (Phase 2)
+AIConversation  — AI assistant conversation history per user (Phase 2)
 ```
 
 All business models use UUID primary keys. All have `created_at` / `updated_at`.
@@ -310,13 +313,24 @@ admin route.
 | Phase | Status      | Description                                                                 |
 | ----- | ----------- | --------------------------------------------------------------------------- |
 | 1     | ✅ Complete | Design system foundation + template cleanup                                 |
-| 2     | Next        | New data models (ClientEvent, Contact, AIConversation) + migrations         |
-| 3     | Planned     | Client utilities — tier-gated features (contact CRM, report builder)       |
-| 4     | Planned     | AI assistant — admin + client-facing, context-aware Claude API integration |
-| 5     | Planned     | Admin utilities — client health score, onboarding checklist, revenue panel |
+| 2     | ✅ Complete | New data models (ClientEvent, Contact, AIConversation) + feature_tier field |
+| 3     | ✅ Complete | Client utilities — tier-gated contacts, AI report widget on dashboard      |
+| 4     | ✅ Complete | AI assistant — admin chat widget, context-aware Claude API integration     |
+| 5     | ✅ Complete | Admin utilities — client health score, onboarding checklist, revenue panel |
 
-**Phase 2 note:** `plan_tier` on the `Client` model is currently a free-text
-`CharField`. Before adding tier-gated features, decide whether to convert it
+**Tier gating:** `feature_tier` field (starter/growth/premium) on the `Client`
+model controls access. `plan_tier` remains as the free-text billing plan name.
+Contacts view is gated to growth+. Report widget is available to all tiers.
+
+**AI endpoints added:**
+* `POST /api/ai/report/` — client weekly snapshot (session auth)
+* `POST /admin/ai/chat/` — admin AI assistant (staff required)
+
+Both use `ANTHROPIC_API_KEY` from settings/env. Model: `claude-sonnet-4-20250514`.
+
+**Phase 2 note (resolved):** `plan_tier` on the `Client` model is a free-text
+`CharField`. A separate `feature_tier` choices field was added to gate features.
+The original `plan_tier` was kept as-is for billing flexibility. Decision: do not convert it
 to choices or add a separate `Plan` model. Do not implement tier-gating
 until this decision is made and documented.
 
@@ -353,4 +367,5 @@ EMAIL_HOST_PASSWORD, DEFAULT_FROM_EMAIL
 N8N_URL, N8N_API_KEY
 ENCRYPTION_KEY        ← CRITICAL: never change after data is encrypted
 INTAKE_TOKEN          ← used by n8n Telegram bot endpoint
+ANTHROPIC_API_KEY     ← Claude API key for AI report + admin assistant
 ```

@@ -88,7 +88,7 @@
     <div class="glass-card glass-card--flat">
         <div class="flex-between mb-4">
             <h2>PENDING INVOICES</h2>
-            <a href="{% url 'portal:invoices' %}" class="label">View All →</a>
+            <a href="{% url 'portal:invoices' %}" class="label">View All &rarr;</a>
         </div>
 
         {% if pending_invoices %}
@@ -138,7 +138,7 @@
             {% endfor %}
         </div>
         <div class="mt-3">
-            <a href="{% url 'portal:support' %}" class="label">View All →</a>
+            <a href="{% url 'portal:support' %}" class="label">View All &rarr;</a>
         </div>
         {% else %}
         <div class="text-center p-3">
@@ -148,8 +148,74 @@
     </div>
 </div>
 
+<div class="glass-card glass-card--flat mb-5">
+    <div class="flex-between mb-4">
+        <h2>WEEKLY SNAPSHOT</h2>
+        <button id="generate-report-btn" class="btn btn-ghost btn-sm" onclick="generateReport()">GENERATE REPORT</button>
+    </div>
+    <div id="report-container">
+        <p class="text-muted" id="report-placeholder">Click "Generate Report" to get an AI-powered summary of your last 7 days.</p>
+        <div id="report-loading" style="display: none;">
+            <p class="label">ANALYZING YOUR DATA...</p>
+        </div>
+        <div id="report-content" style="display: none;">
+            <p id="report-text" class="text-body" style="line-height: 1.8;"></p>
+            <p id="report-timestamp" class="label mt-3"></p>
+        </div>
+    </div>
+</div>
+
 <div class="flex-center gap-md mt-6">
     <a href="{% url 'portal:workflows' %}" class="btn btn-primary">VIEW WORKFLOWS</a>
     <a href="{% url 'portal:support' %}" class="btn btn-ghost">OPEN SUPPORT TICKET</a>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generateReport() {
+    var btn = document.getElementById('generate-report-btn');
+    var placeholder = document.getElementById('report-placeholder');
+    var loading = document.getElementById('report-loading');
+    var content = document.getElementById('report-content');
+    var text = document.getElementById('report-text');
+    var timestamp = document.getElementById('report-timestamp');
+
+    btn.disabled = true;
+    btn.textContent = 'GENERATING...';
+    placeholder.style.display = 'none';
+    loading.style.display = 'block';
+    content.style.display = 'none';
+
+    fetch('{% url "portal:ai-report" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        loading.style.display = 'none';
+        if (data.report) {
+            text.textContent = data.report;
+            var d = new Date(data.generated_at);
+            timestamp.textContent = 'Generated: ' + d.toLocaleString();
+            content.style.display = 'block';
+        } else {
+            text.textContent = data.error || 'Could not generate report.';
+            content.style.display = 'block';
+        }
+        btn.disabled = false;
+        btn.textContent = 'REGENERATE';
+    })
+    .catch(function(err) {
+        loading.style.display = 'none';
+        text.textContent = 'Error generating report. Please try again.';
+        content.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'RETRY';
+    });
+}
+</script>
 {% endblock %}

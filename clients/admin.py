@@ -17,7 +17,8 @@ from datetime import datetime
 import requests
 from .models import (
     Client, Workflow, APICredential, Execution,
-    Invoice, SupportTicket, ClientProfile, PortalSettings
+    Invoice, SupportTicket, ClientProfile, PortalSettings,
+    ClientEvent, Contact, AIConversation
 )
 
 
@@ -51,11 +52,11 @@ class ClientAdmin(admin.ModelAdmin):
 
     list_display = (
         'company_name', 'contact_name', 'email',
-        'status_badge', 'plan_tier', 'monthly_fee', 'next_billing_date'
+        'status_badge', 'health_score', 'plan_tier', 'monthly_fee', 'next_billing_date'
     )
     list_filter = ('status', 'plan_tier', 'billing_cycle', 'created_at')
     search_fields = ('company_name', 'contact_name', 'email', 'phone')
-    readonly_fields = ('id', 'created_at', 'updated_at')
+    readonly_fields = ('id', 'created_at', 'updated_at', 'onboarding_status')
     date_hierarchy = 'created_at'
 
     fieldsets = (
@@ -63,7 +64,10 @@ class ClientAdmin(admin.ModelAdmin):
             'fields': ('company_name', 'contact_name', 'email', 'phone')
         }),
         ('Plan & Billing', {
-            'fields': ('status', 'plan_tier', 'setup_fee', 'monthly_fee', 'billing_cycle', 'next_billing_date')
+            'fields': ('status', 'plan_tier', 'feature_tier', 'setup_fee', 'monthly_fee', 'billing_cycle', 'next_billing_date')
+        }),
+        ('Onboarding', {
+            'fields': ('onboarding_status',),
         }),
         ('Internal Notes', {
             'fields': ('notes',),
@@ -96,13 +100,13 @@ class ClientAdmin(admin.ModelAdmin):
     def mark_as_churned(self, request, queryset):
         """Mark selected clients as churned."""
         updated = queryset.update(status='churned')
-        self.message_user(request, f'{updated} client(s) marked as churned.')
+        self.message_user(request, str(updated) + ' client(s) marked as churned.')
     mark_as_churned.short_description = 'Mark as churned'
 
     def mark_as_active(self, request, queryset):
         """Mark selected clients as active."""
         updated = queryset.update(status='active')
-        self.message_user(request, f'{updated} client(s) marked as active.')
+        self.message_user(request, str(updated) + ' client(s) marked as active.')
     mark_as_active.short_description = 'Mark as active'
 
     def send_welcome_email(self, request, queryset):
@@ -112,17 +116,112 @@ class ClientAdmin(admin.ModelAdmin):
             try:
                 send_mail(
                     subject='Welcome to Monoliet Automation Services',
-                    message=f'Dear {client.contact_name},\n\nWelcome to Monoliet! We are excited to help automate your business processes.\n\nBest regards,\nThe Monoliet Team',
+                    message='Dear ' + client.contact_name + ',\n\nWelcome to Monoliet! We are excited to help automate your business processes.\n\nBest regards,\nThe Monoliet Team',
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[client.email],
                     fail_silently=False,
                 )
                 count += 1
             except Exception as e:
-                self.message_user(request, f'Failed to send email to {client.email}: {str(e)}', level='error')
+                self.message_user(request, 'Failed to send email to ' + client.email + ': ' + str(e), level='error')
 
-        self.message_user(request, f'Welcome email sent to {count} client(s).')
+        self.message_user(request, 'Welcome email sent to ' + str(count) + ' client(s).')
     send_welcome_email.short_description = 'Send welcome email'
+
+    def health_score(self, obj):
+        """Calculate and display client health score."""
+        from datetime import date, timedelta
+        from django.db.models import Sum
+
+        seven_days_ago = date.today() - timedelta(days=7)
+
+        # Workflow error rate (40%)
+        exec_stats = obj.executions.filter(
+            execution_date__gte=seven_days_ago
+        ).aggregate(
+            total=Sum('total_count'),
+            errors=Sum('error_count')
+        )
+        total = exec_stats['total'] or 0
+        errors = exec_stats['errors'] or 0
+        if total > 0:
+            error_rate = errors / total
+            workflow_score = max(0, (1 - error_rate)) * 100
+        else:
+            workflow_score = 100
+
+        # Open high-priority tickets (30%)
+        high_tickets = obj.support_tickets.filter(
+            status__in=['open', 'in_progress'],
+            priority='high'
+        ).count()
+        ticket_score = 100 if high_tickets == 0 else max(0, 100 - (high_tickets * 25))
+
+        # Overdue invoices (30%)
+        overdue = obj.invoices.filter(
+            status='pending',
+            due_date__lt=date.today()
+        ).count()
+        invoice_score = 100 if overdue == 0 else max(0, 100 - (overdue * 25))
+
+        score = int(workflow_score * 0.4 + ticket_score * 0.3 + invoice_score * 0.3)
+
+        if score >= 80:
+            badge_class = 'green'
+            label = 'HEALTHY'
+        elif score >= 50:
+            badge_class = 'orange'
+            label = 'AT RISK'
+        else:
+            badge_class = 'red'
+            label = 'CRITICAL'
+
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 10px; border-radius: 3px;">{} ({})</span>',
+            badge_class, label, score
+        )
+    health_score.short_description = 'Health'
+
+    def onboarding_status(self, obj):
+        """Display onboarding checklist for the client."""
+        from datetime import date, timedelta
+
+        checks = []
+        seven_days_ago = date.today() - timedelta(days=7)
+
+        # 1. Has at least one active workflow
+        has_workflow = obj.workflows.filter(status='active').exists()
+        checks.append(('Active workflow', has_workflow))
+
+        # 2. Has at least one linked user
+        has_user = obj.users.exists()
+        checks.append(('Linked portal user', has_user))
+
+        # 3. Has paid at least one invoice
+        has_paid = obj.invoices.filter(status='paid').exists()
+        checks.append(('Paid invoice', has_paid))
+
+        # 4. No open high-priority tickets
+        no_high_tickets = not obj.support_tickets.filter(
+            status__in=['open', 'in_progress'], priority='high'
+        ).exists()
+        checks.append(('No high-priority tickets', no_high_tickets))
+
+        # 5. Recent execution activity
+        has_recent = obj.executions.filter(execution_date__gte=seven_days_ago).exists()
+        checks.append(('Recent execution (7d)', has_recent))
+
+        html_parts = []
+        for label, passed in checks:
+            icon = '&#10004;' if passed else '&#10008;'
+            color = 'var(--accent-green)' if passed else 'var(--accent-error)'
+            html_parts.append(
+                '<div style="padding: 4px 0; color: ' + color + '; font-family: Space Mono, monospace; font-size: 0.8rem;">'
+                + icon + ' ' + label + '</div>'
+            )
+
+        return format_html(''.join(html_parts))
+    onboarding_status.short_description = 'Onboarding Status'
 
 
 @admin.register(Workflow)
@@ -180,7 +279,7 @@ class WorkflowAdmin(admin.ModelAdmin):
                 'text-transform: uppercase; '
                 'text-decoration: none; '
                 'display: inline-block;'
-                '">OPEN IN n8n ↗</a>',
+                '">OPEN IN n8n &#8599;</a>',
                 obj.n8n_workflow_url
             )
         return format_html('<span style="color: #9B9B9B;">NO LINK</span>')
@@ -252,7 +351,7 @@ class ExecutionAdmin(admin.ModelAdmin):
             color = 'orange'
         else:
             color = 'red'
-        percentage = f'{rate:.1f}%'
+        percentage = '{:.1f}%'.format(rate)
         return format_html(
             '<span style="color: {};">{}</span>',
             color, percentage
@@ -309,7 +408,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     def mark_as_paid(self, request, queryset):
         """Mark selected invoices as paid."""
         updated = queryset.update(status='paid', paid_date=timezone.now().date())
-        self.message_user(request, f'{updated} invoice(s) marked as paid.')
+        self.message_user(request, str(updated) + ' invoice(s) marked as paid.')
     mark_as_paid.short_description = 'Mark as paid'
 
 
@@ -376,13 +475,13 @@ class SupportTicketAdmin(admin.ModelAdmin):
     def mark_as_resolved(self, request, queryset):
         """Mark selected tickets as resolved."""
         updated = queryset.update(status='resolved', resolved_at=timezone.now())
-        self.message_user(request, f'{updated} ticket(s) marked as resolved.')
+        self.message_user(request, str(updated) + ' ticket(s) marked as resolved.')
     mark_as_resolved.short_description = 'Mark as resolved'
 
     def mark_as_in_progress(self, request, queryset):
         """Mark selected tickets as in progress."""
         updated = queryset.update(status='in_progress')
-        self.message_user(request, f'{updated} ticket(s) marked as in progress.')
+        self.message_user(request, str(updated) + ' ticket(s) marked as in progress.')
     mark_as_in_progress.short_description = 'Mark as in progress'
 
 
@@ -423,7 +522,7 @@ class PortalSettingsAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         # Redirect to change view for singleton
         obj = PortalSettings.load()
-        return redirect(f'/admin/clients/portalsettings/{obj.pk}/change/')
+        return redirect('/admin/clients/portalsettings/' + str(obj.pk) + '/change/')
 
     fieldsets = (
         ('n8n INTEGRATION', {
@@ -482,7 +581,7 @@ class PortalSettingsAdmin(admin.ModelAdmin):
                 'font-family: Space Mono, monospace; '
                 'margin-bottom: 1rem;'
                 '">'
-                '✓ CONNECTED<br>'
+                '&#10003; CONNECTED<br>'
                 '<span style="font-size: 0.75rem; opacity: 0.8;">Last checked: {}</span>'
                 '</div>',
                 obj.n8n_last_checked.strftime('%Y-%m-%d %H:%M') if obj.n8n_last_checked else 'Never'
@@ -498,7 +597,7 @@ class PortalSettingsAdmin(admin.ModelAdmin):
                 'font-family: Space Mono, monospace; '
                 'margin-bottom: 1rem;'
                 '">'
-                '✗ CONNECTION FAILED<br>'
+                '&#10007; CONNECTION FAILED<br>'
                 '<span style="font-size: 0.75rem;">Check API URL and key</span>'
                 '</div>'
             )
@@ -513,7 +612,7 @@ class PortalSettingsAdmin(admin.ModelAdmin):
                 'font-family: Space Mono, monospace; '
                 'margin-bottom: 1rem;'
                 '">'
-                '○ NOT CONFIGURED<br>'
+                '&#9675; NOT CONFIGURED<br>'
                 '<span style="font-size: 0.75rem;">Enter API credentials</span>'
                 '</div>'
             )
@@ -531,12 +630,11 @@ class PortalSettingsAdmin(admin.ModelAdmin):
             'display: inline-block; '
             'font-weight: 500; '
             'letter-spacing: 0.05em; '
-            'transition: all 0.3s;'
-            '" onmouseover="this.style.background=\'#1e1f2b\';this.style.color=\'#FFFFFF\';this.style.borderColor=\'#FFFFFF\';" '
-            'onmouseout="this.style.background=\'#FFFFFF\';this.style.color=\'#1e1f2b\';this.style.borderColor=\'#1e1f2b\';">'
+            "transition: all 0.3s;"
+            '">'
             'TEST CONNECTION'
             '</a>',
-            f'/admin/clients/portalsettings/{obj.pk}/test-connection/'
+            '/admin/clients/portalsettings/' + str(obj.pk) + '/test-connection/'
         )
 
         return format_html('{}<br>{}', status_html, button_html)
@@ -556,16 +654,16 @@ class PortalSettingsAdmin(admin.ModelAdmin):
                 'font-family: Space Mono, monospace; '
                 'margin-bottom: 1rem;'
                 '">'
-                '○ DISABLED<br>'
+                '&#9675; DISABLED<br>'
                 '<span style="font-size: 0.75rem;">Enable to access MCP dashboard</span>'
                 '</div>'
             )
 
         # Status badge based on current status
         status_colors = {
-            'operational': ('#2ED573', 'rgba(46,213,115,0.2)', '✓'),
-            'degraded': ('#FFA502', 'rgba(255,165,2,0.2)', '⚠'),
-            'offline': ('#EF4444', 'rgba(239,68,68,0.2)', '✗'),
+            'operational': ('#2ED573', 'rgba(46,213,115,0.2)', '&#10003;'),
+            'degraded': ('#FFA502', 'rgba(255,165,2,0.2)', '&#9888;'),
+            'offline': ('#EF4444', 'rgba(239,68,68,0.2)', '&#10007;'),
             'unknown': ('#9B9B9B', 'rgba(155,155,155,0.2)', '?'),
         }
 
@@ -603,8 +701,7 @@ class PortalSettingsAdmin(admin.ModelAdmin):
             'font-weight: 500; '
             'letter-spacing: 0.05em; '
             'transition: all 0.3s;'
-            '" onmouseover="this.style.background=\'#1e1f2b\';this.style.color=\'#FFFFFF\';this.style.borderColor=\'#FFFFFF\';" '
-            'onmouseout="this.style.background=\'#FFFFFF\';this.style.color=\'#1e1f2b\';this.style.borderColor=\'#1e1f2b\';">'
+            '">'
             'OPEN MCP DASHBOARD'
             '</a>'
         )
@@ -631,12 +728,12 @@ class PortalSettingsAdmin(admin.ModelAdmin):
 
         if not portal_settings.n8n_api_key:
             messages.error(request, 'n8n API key not configured')
-            return redirect(f'/admin/clients/portalsettings/{object_id}/change/')
+            return redirect('/admin/clients/portalsettings/' + str(object_id) + '/change/')
 
         try:
             # Test API connection
             response = requests.get(
-                f"{portal_settings.n8n_api_url}/workflows",
+                portal_settings.n8n_api_url + "/workflows",
                 headers={'X-N8N-API-KEY': portal_settings.n8n_api_key},
                 timeout=5
             )
@@ -649,24 +746,101 @@ class PortalSettingsAdmin(admin.ModelAdmin):
                 workflow_count = len(response.json().get('data', []))
                 messages.success(
                     request,
-                    f'✓ Connection successful! Found {workflow_count} workflows in n8n.'
+                    'Connection successful! Found ' + str(workflow_count) + ' workflows in n8n.'
                 )
             else:
                 portal_settings.n8n_connection_status = 'error'
                 portal_settings.save()
                 messages.error(
                     request,
-                    f'✗ Connection failed: HTTP {response.status_code}'
+                    'Connection failed: HTTP ' + str(response.status_code)
                 )
 
         except requests.exceptions.RequestException as e:
             portal_settings.n8n_connection_status = 'error'
             portal_settings.save()
-            messages.error(request, f'✗ Connection error: {str(e)}')
+            messages.error(request, 'Connection error: ' + str(e))
 
-        return redirect(f'/admin/clients/portalsettings/{object_id}/change/')
+        return redirect('/admin/clients/portalsettings/' + str(object_id) + '/change/')
 
     class Media:
         css = {
             'all': ('css/style.css',)
         }
+
+
+@admin.register(ClientEvent)
+class ClientEventAdmin(admin.ModelAdmin):
+    """Admin configuration for ClientEvent model."""
+
+    list_display = ('client', 'event_type', 'title', 'created_by', 'created_at')
+    list_filter = ('event_type', 'created_at')
+    search_fields = ('title', 'description', 'client__company_name')
+    readonly_fields = ('id', 'created_at')
+    date_hierarchy = 'created_at'
+    raw_id_fields = ('client', 'created_by')
+
+    fieldsets = (
+        ('Event Information', {
+            'fields': ('client', 'event_type', 'title', 'description')
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'id', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(Contact)
+class ContactAdmin(admin.ModelAdmin):
+    """Admin configuration for Contact model."""
+
+    list_display = ('first_name', 'last_name', 'client', 'email', 'status', 'source', 'created_at')
+    list_filter = ('status', 'source', 'created_at')
+    search_fields = ('first_name', 'last_name', 'email', 'company', 'client__company_name')
+    readonly_fields = ('id', 'created_at', 'updated_at')
+    date_hierarchy = 'created_at'
+    raw_id_fields = ('client',)
+
+    fieldsets = (
+        ('Contact Information', {
+            'fields': ('client', 'first_name', 'last_name', 'email', 'phone', 'company')
+        }),
+        ('Status & Tracking', {
+            'fields': ('status', 'source', 'tags', 'notes')
+        }),
+        ('System Information', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(AIConversation)
+class AIConversationAdmin(admin.ModelAdmin):
+    """Admin configuration for AIConversation model."""
+
+    list_display = ('user', 'context_type', 'client', 'message_count', 'created_at', 'updated_at')
+    list_filter = ('context_type', 'created_at')
+    search_fields = ('user__username', 'client__company_name')
+    readonly_fields = ('id', 'created_at', 'updated_at', 'messages')
+    date_hierarchy = 'created_at'
+    raw_id_fields = ('user', 'client')
+
+    fieldsets = (
+        ('Conversation Info', {
+            'fields': ('user', 'client', 'context_type')
+        }),
+        ('Messages', {
+            'fields': ('messages',)
+        }),
+        ('System Information', {
+            'fields': ('id', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def message_count(self, obj):
+        """Display the number of messages in the conversation."""
+        return len(obj.messages) if obj.messages else 0
+    message_count.short_description = 'Messages'
