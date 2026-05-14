@@ -10,7 +10,16 @@
       "Bash(python:*)",
       "Bash(wc:*)",
       "Bash(ls -la \"C:\\\\Users\\\\Andres\\\\Desktop\\\\Monoliet Portal Repository\\\\monoliet-portal\\\\clients\\\\templates\\\\admin\"\" 2>/dev/null || dir \"C:UsersAndresDesktopMonoliet Portal Repositorymonoliet-portalclientstemplatesadmin \")",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git config:*)",
+      "Bash(git push:*)",
+      "Bash(docker compose up *)",
+      "Bash(git pull *)",
+      "Bash(python3 -m py_compile /opt/docker/monoliet-portal/clients/forms.py)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(docker compose *)",
+      "Bash(docker-compose exec *)",
+      "Bash(python3 *)"
     ]
   }
 }
